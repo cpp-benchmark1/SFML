@@ -32,7 +32,7 @@ jobs:
     - if: matrix.build-mode == 'manual'
       shell: bash
       run: |
-        sudo apt install libxrandr-dev libxcursor-dev libudev-dev libfreetype-dev libflac-dev libvorbis-dev libgl1-mesa-dev libegl1-mesa-dev libfreetype-dev X11
+        sudo apt-get install -y libxrandr-dev libxcursor-dev libudev-dev libfreetype-dev libflac-dev libvorbis-dev libgl1-mesa-dev libegl1-mesa-dev libfreetype-dev libxorg-dev libx11-dev
         cmake -B build
         cmake --build build
     - if: matrix.build-mode == 'manual'
