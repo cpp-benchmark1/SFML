@@ -43,7 +43,7 @@ jobs:
           sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
           sudo apt-get update
           sudo apt-get build-dep libsfml-dev
-          sudo apt get libxi-dev
+          sudo apt-get install libxi-dev
           mkdir build
           cmake -B build
           coverity_tool/bin/cov-build --dir cov-int cmake --build build || echo 'Errors on Coverity build'
