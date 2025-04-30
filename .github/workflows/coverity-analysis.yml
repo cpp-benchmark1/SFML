@@ -40,6 +40,8 @@ jobs:
           echo "Coverity Tool installed successfully"
       - name: Build with Coverity
         run: |
+          sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+          sudo apt-get update
           sudo apt-get build-dep libsfml-dev
           mkdir build
           cmake -B build
