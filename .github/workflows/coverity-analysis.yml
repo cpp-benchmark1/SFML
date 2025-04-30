@@ -40,9 +40,10 @@ jobs:
           echo "Coverity Tool installed successfully"
       - name: Build with Coverity
         run: |
-          sudo apt-get install -y libxrandr-dev libxcursor-dev libudev-dev libfreetype-dev libflac-dev libvorbis-dev libgl1-mesa-dev libegl1-mesa-dev libfreetype-dev libxorg-dev libx11-dev
+          sudo apt-get build-dep libsfml-dev
+          mkdir build
           cmake -B build
-          coverity_tool/bin/cov-build --dir cov-int cmake --build build || true
+          coverity_tool/bin/cov-build --dir cov-int cmake --build build || echo 'Errors on Coverity build'
       - name: Compress with bzip2
         run: |
           tar cjvf myproject.tar.bz2 cov-int
