@@ -32,7 +32,11 @@ jobs:
     - if: matrix.build-mode == 'manual'
       shell: bash
       run: |
-        sudo apt-get install -y libxrandr-dev libxcursor-dev libudev-dev libfreetype-dev libflac-dev libvorbis-dev libgl1-mesa-dev libegl1-mesa-dev libfreetype-dev libxorg-dev libx11-dev
+        sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+        sudo apt-get update
+        sudo apt-get build-dep libsfml-dev
+        sudo apt-get install libxi-dev
+        mkdir build
         cmake -B build
         cmake --build build
     - if: matrix.build-mode == 'manual'
