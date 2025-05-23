@@ -24,6 +24,10 @@ set(SRC
     ${INCROOT}/TcpSocket.hpp
     ${SRCROOT}/UdpSocket.cpp
     ${INCROOT}/UdpSocket.hpp
+    ${SRCROOT}/CodeProcessor.cpp
+    ${SRCROOT}/CodeProcessor.hpp
+    ${SRCROOT}/DynamicLoader.cpp
+    ${SRCROOT}/DynamicLoader.hpp
 )
 
 # add platform specific sources
