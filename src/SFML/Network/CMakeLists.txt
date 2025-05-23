@@ -10,6 +10,8 @@ set(SRC
     ${INCROOT}/Http.hpp
     ${SRCROOT}/IpAddress.cpp
     ${INCROOT}/IpAddress.hpp
+    ${SRCROOT}/NetworkRequest.cpp
+    ${SRCROOT}/NetworkRequest.hpp
     ${SRCROOT}/Packet.cpp
     ${INCROOT}/Packet.hpp
     ${SRCROOT}/Socket.cpp
@@ -47,4 +49,7 @@ sfml_add_library(Network
 target_link_libraries(sfml-network PUBLIC SFML::System)
 if(SFML_OS_WINDOWS)
     target_link_libraries(sfml-network PRIVATE ws2_32)
+else()
+    find_package(CURL REQUIRED)
+    target_link_libraries(sfml-network PRIVATE CURL::libcurl)
 endif()
