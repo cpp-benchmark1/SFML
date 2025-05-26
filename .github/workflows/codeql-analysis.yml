@@ -1,9 +1,9 @@
 name: "CodeQL"
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "CWE-943" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "CWE-943" ]
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
@@ -32,10 +32,30 @@ jobs:
     - if: matrix.build-mode == 'manual'
       shell: bash
       run: |
-        sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
         sudo apt-get update
-        sudo apt-get build-dep libsfml-dev
-        sudo apt-get install libxi-dev
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          git \
+          pkg-config \
+          libx11-dev \
+          libxrandr-dev \
+          libudev-dev \
+          libgl1-mesa-dev \
+          libflac-dev \
+          libogg-dev \
+          libvorbis-dev \
+          libopenal-dev \
+          libfreetype6-dev \
+          libxi-dev \
+          libxcursor-dev \
+          libxinerama-dev \
+          libxrandr-dev \
+          libxrender-dev \
+          libxfixes-dev \
+          libxext-dev \
+          libmongoc-dev \
+          libbson-dev
         mkdir build
         cmake -B build
         cmake --build build
