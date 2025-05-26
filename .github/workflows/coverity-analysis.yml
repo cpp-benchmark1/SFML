@@ -36,7 +36,8 @@ jobs:
             -O coverity_tool.tgz
           mkdir -p coverity_tool
           tar -xvzf coverity_tool.tgz -C coverity_tool --strip-components=1
-          export PATH=$PWD/coverity_tool/bin:$PATH
+          echo "COVERITY_PATH=$(pwd)/coverity_tool/bin" >> $GITHUB_ENV
+          echo "PATH=$(pwd)/coverity_tool/bin:$PATH" >> $GITHUB_ENV
           echo "Coverity Tool installed successfully"
       - name: Build with Coverity
         run: |
@@ -72,7 +73,7 @@ jobs:
             -DSFML_BUILD_AUDIO=ON \
             -DSFML_BUILD_GRAPHICS=ON \
             -DSFML_BUILD_WINDOW=ON
-          coverity_tool/bin/cov-build --dir cov-int cmake --build .
+          $COVERITY_PATH/cov-build --dir cov-int cmake --build .
       - name: Compress with bzip2
         run: |
           cd build
