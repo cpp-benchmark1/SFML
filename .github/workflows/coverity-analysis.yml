@@ -1,9 +1,9 @@
 name: Coverity Scan
 on:
   push:
-    branches: [ "main", "CWE-943" ]
+    branches: [ "main", "CWE-943-NoSQL-Injection" ]
   pull_request:
-    branches: [ "main", "CWE-943" ]
+    branches: [ "main", "CWE-943-NoSQL-Injection" ]
   workflow_dispatch:
     inputs:
       languages:
@@ -65,7 +65,7 @@ jobs:
             libmongoc-dev \
             libbson-dev
           mkdir build
-          cmake -B build
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSFML_BUILD_NETWORK=ON
           coverity_tool/bin/cov-build --dir cov-int cmake --build build || echo 'Errors on Coverity build'
       - name: Compress with bzip2
         run: |
