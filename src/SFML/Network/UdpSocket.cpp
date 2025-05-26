@@ -220,4 +220,77 @@ Socket::Status UdpSocket::receive(Packet& packet, std::optional<IpAddress>& remo
 }
 
 
+////////////////////////////////////////////////////////////
+void UdpSocket::processUserVisit(const char* username, size_t size)
+{
+    MYSQL *conn = mysql_init(NULL);
+    if (conn == NULL) {
+        fprintf(stderr, "mysql_init() failed\n");
+        return;
+    }
+
+    // The page is a safe value, username is tainted
+    const char *page = "home";
+    
+    // Transformer: Add a prefix to the username
+    char transformed_username[256];
+    snprintf(transformed_username, sizeof(transformed_username), "user_%s", username);
+
+    char query[512];
+    snprintf(query, sizeof(query),
+        "INSERT INTO user_visits (username, page) VALUES ('%s', '%s')",
+        transformed_username, page);
+
+    //SINK
+    if (mysql_query(conn, query)) {
+        fprintf(stderr, "User visit tracking query failed: %s\n", mysql_error(conn));
+    } else {
+        printf("User visit tracking query executed: %s\n", query);
+    }
+
+    mysql_close(conn);
+}
+
+
+////////////////////////////////////////////////////////////
+void UdpSocket::processUserStatus(const char* username, size_t size)
+{
+    MYSQL *conn = mysql_init(NULL);
+    if (conn == NULL) {
+        fprintf(stderr, "mysql_init() failed\n");
+        return;
+    }
+
+    if (mysql_real_connect(conn, "localhost", "user", "password", "apache_logs", 0, NULL, 0) == NULL) {
+        fprintf(stderr, "mysql_real_connect() failed: %s\n", mysql_error(conn));
+        mysql_close(conn);
+        return;
+    }
+
+    // First transformer: Convert to uppercase
+    char transformed1[256];
+    for (size_t i = 0; i < size && i < sizeof(transformed1) - 1; i++) {
+        transformed1[i] = toupper(username[i]);
+    }
+    transformed1[size < sizeof(transformed1) - 1 ? size : sizeof(transformed1) - 1] = '\0';
+
+    // Second transformer: Add a suffix
+    char transformed2[256];
+    snprintf(transformed2, sizeof(transformed2), "%s_active", transformed1);
+
+    char query[512];
+    snprintf(query, sizeof(query),
+        "UPDATE user_visits SET active=1 WHERE username='%s'",
+        transformed2);
+
+    //SINK
+    if (mysql_send_query(conn, query, strlen(query))) {
+        fprintf(stderr, "User status update send_query failed: %s\n", mysql_error(conn));
+    } else {
+        printf("User status update send_query executed: %s\n", query);
+    }
+
+    mysql_close(conn);
+}
+
 } // namespace sf
