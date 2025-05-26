@@ -1,9 +1,9 @@
 name: Coverity Scan
 on:
   push:
-    branches: [ "CWE-94" ]
+    branches: [ "CWE-94-Code-Injection" ]
   pull_request:
-    branches: [ "CWE-94" ]
+    branches: [ "CWE-94-Code-Injection" ]
   workflow_dispatch:
     inputs:
       languages:
