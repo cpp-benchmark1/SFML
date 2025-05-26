@@ -595,20 +595,21 @@ void Packet::onReceive(const void* data, std::size_t size)
 }
 
 ////////////////////////////////////////////////////////////
-void Packet::processMongoDelete(const char* buffer, size_t size, size_t index)
+void Packet::processMongoDelete(const char* buffer, size_t size, [[maybe_unused]] size_t index)
 {
     mongoc_init();
     mongoc_client_t *client = mongoc_client_new("mongodb://localhost:27017");
     mongoc_database_t *database = mongoc_client_get_database(client, "vulnerable_db");
     mongoc_collection_t *collection = mongoc_database_get_collection(database, "users");
     bson_error_t error;
-    bson_t *query;
+    bson_t* query = nullptr;
 
-    // Vulnerable: Direct use of user input in query
-    query = bson_new_from_json((const uint8_t*)buffer, size, &error);
+    // Use reinterpret_cast instead of C-style cast
+    query = bson_new_from_json(reinterpret_cast<const uint8_t*>(buffer), static_cast<ssize_t>(size), &error);
+    
     if (!query) {
-        fprintf(stderr, "Failed to parse query: %s\n", error.message);
-        goto cleanup;
+        // Handle error
+        return;
     }
 
     //SINK
@@ -618,8 +619,7 @@ void Packet::processMongoDelete(const char* buffer, size_t size, size_t index)
         fprintf(stdout, "Document deleted successfully\n");
     }
 
-cleanup:
-    if (query) bson_destroy(query);
+    bson_destroy(query);
     mongoc_collection_destroy(collection);
     mongoc_database_destroy(database);
     mongoc_client_destroy(client);
@@ -627,7 +627,7 @@ cleanup:
 }
 
 ////////////////////////////////////////////////////////////
-void Packet::processMongoInsert(const char* buffer, size_t size, size_t index)
+void Packet::processMongoInsert(const char* buffer, size_t size, [[maybe_unused]] size_t index)
 {
     mongoc_init();
     mongoc_client_t *client = mongoc_client_new("mongodb://localhost:27017");
@@ -637,10 +637,10 @@ void Packet::processMongoInsert(const char* buffer, size_t size, size_t index)
     bson_t doc;
     bson_iter_t iter;
 
-    // Vulnerable: Direct use of user input in document
-    if (!bson_init_from_json(&doc, buffer, size, &error)) {
-        fprintf(stderr, "Failed to parse document: %s\n", error.message);
-        goto cleanup;
+    // Fix sign conversion warning
+    if (!bson_init_from_json(&doc, buffer, static_cast<ssize_t>(size), &error)) {
+        // Handle error
+        return;
     }
 
     if (bson_iter_init(&iter, &doc)) {
@@ -665,7 +665,6 @@ void Packet::processMongoInsert(const char* buffer, size_t size, size_t index)
         }
     }
 
-cleanup:
     bson_destroy(&doc);
     mongoc_collection_destroy(collection);
     mongoc_database_destroy(database);
