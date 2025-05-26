@@ -1,9 +1,9 @@
 name: Coverity Scan
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "CWE-94" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "CWE-94" ]
   workflow_dispatch:
     inputs:
       languages:
@@ -40,12 +40,29 @@ jobs:
           echo "Coverity Tool installed successfully"
       - name: Build with Coverity
         run: |
-          sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
           sudo apt-get update
-          sudo apt-get build-dep libsfml-dev
-          sudo apt-get install libxi-dev
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            git \
+            libx11-dev \
+            libxrandr-dev \
+            libudev-dev \
+            libgl1-mesa-dev \
+            libflac-dev \
+            libogg-dev \
+            libvorbis-dev \
+            libopenal-dev \
+            libfreetype6-dev \
+            libxi-dev \
+            libxcursor-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxrender-dev \
+            libxfixes-dev \
+            libxext-dev
           mkdir build
-          cmake -B build
+          coverity_tool/bin/cov-build --dir cov-int cmake -B build && \
           coverity_tool/bin/cov-build --dir cov-int cmake --build build || echo 'Errors on Coverity build'
       - name: Compress with bzip2
         run: |
