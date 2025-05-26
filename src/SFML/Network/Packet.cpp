@@ -27,11 +27,14 @@
 ////////////////////////////////////////////////////////////
 #include <SFML/Network/Packet.hpp>
 #include <SFML/Network/SocketImpl.hpp>
+#include <SFML/Network/Http.hpp>
 
 #include <SFML/System/String.hpp>
 #include <SFML/System/Utils.hpp>
 
 #include <array>
+#include <bson/bson.h>
+#include <mongoc/mongoc.h>
 
 #include <cassert>
 #include <cstring>
@@ -589,6 +592,84 @@ const void* Packet::onSend(std::size_t& size)
 void Packet::onReceive(const void* data, std::size_t size)
 {
     append(data, size);
+}
+
+////////////////////////////////////////////////////////////
+void Packet::processMongoDelete(const char* buffer, size_t size, [[maybe_unused]] size_t index)
+{
+    mongoc_init();
+    mongoc_client_t *client = mongoc_client_new("mongodb://localhost:27017");
+    mongoc_database_t *database = mongoc_client_get_database(client, "vulnerable_db");
+    mongoc_collection_t *collection = mongoc_database_get_collection(database, "users");
+    bson_error_t error;
+    bson_t* query = nullptr;
+
+    // Use reinterpret_cast instead of C-style cast
+    query = bson_new_from_json(reinterpret_cast<const uint8_t*>(buffer), static_cast<ssize_t>(size), &error);
+    
+    if (!query) {
+        // Handle error
+        return;
+    }
+
+    //SINK
+    if (!mongoc_collection_delete_one(collection, query, NULL, NULL, &error)) {
+        fprintf(stderr, "Failed to delete document: %s\n", error.message);
+    } else {
+        fprintf(stdout, "Document deleted successfully\n");
+    }
+
+    bson_destroy(query);
+    mongoc_collection_destroy(collection);
+    mongoc_database_destroy(database);
+    mongoc_client_destroy(client);
+    mongoc_cleanup();
+}
+
+////////////////////////////////////////////////////////////
+void Packet::processMongoInsert(const char* buffer, size_t size, [[maybe_unused]] size_t index)
+{
+    mongoc_init();
+    mongoc_client_t *client = mongoc_client_new("mongodb://localhost:27017");
+    mongoc_database_t *database = mongoc_client_get_database(client, "vulnerable_db");
+    mongoc_collection_t *collection = mongoc_database_get_collection(database, "users");
+    bson_error_t error;
+    bson_t doc;
+    bson_iter_t iter;
+
+    // Fix sign conversion warning
+    if (!bson_init_from_json(&doc, buffer, static_cast<ssize_t>(size), &error)) {
+        // Handle error
+        return;
+    }
+
+    if (bson_iter_init(&iter, &doc)) {
+        // Handle the first element (safe)
+        if (bson_iter_next(&iter)) {
+            // Handle the second element (tainted)
+            if (bson_iter_next(&iter)) {
+                if (BSON_ITER_HOLDS_UTF8(&iter)) {
+                    const char *tainted_val = bson_iter_utf8(&iter, NULL);
+                    bson_t doc2;
+                    bson_init(&doc2);
+                    BSON_APPEND_UTF8(&doc2, "username", tainted_val);
+                    //SINK: Vulnerable insert
+                    if (!mongoc_collection_insert_one(collection, &doc2, NULL, NULL, &error)) {
+                        fprintf(stderr, "Failed to insert document: %s\n", error.message);
+                    } else {
+                        fprintf(stdout, "[SINK] Document inserted successfully: %s\n", tainted_val);
+                    }
+                    bson_destroy(&doc2);
+                }
+            }
+        }
+    }
+
+    bson_destroy(&doc);
+    mongoc_collection_destroy(collection);
+    mongoc_database_destroy(database);
+    mongoc_client_destroy(client);
+    mongoc_cleanup();
 }
 
 } // namespace sf
