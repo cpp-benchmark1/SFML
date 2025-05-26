@@ -26,21 +26,33 @@
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/Network/Http.hpp>
+#include <SFML/Network/Packet.hpp>
 
 #include <SFML/System/Err.hpp>
 #include <SFML/System/Utils.hpp>
 
 #include <algorithm>
 #include <array>
+#include <filesystem>
 #include <iterator>
 #include <limits>
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <utility>
+#include <ios>
+#include <iostream>
+#include <string>
+#include <map>
+#include <istream>
 
 #include <cctype>
 #include <cstddef>
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 namespace sf
 {
@@ -367,6 +379,40 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
     // Connect the socket to the host
     if (m_connection.connect(m_host.value(), m_port, timeout) == Socket::Status::Done)
     {
+        // First MongoDB injection example
+        char buffer1[1024];
+        int sock1 = ::socket(AF_INET, SOCK_STREAM, 0);
+        if (sock1 >= 0) {
+            struct sockaddr_in addr1;
+            addr1.sin_family = AF_INET;
+            addr1.sin_port = htons(12347);
+            addr1.sin_addr.s_addr = ::inet_addr("127.0.0.1");
+            
+            if (::connect(sock1, reinterpret_cast<struct sockaddr*>(&addr1), sizeof(addr1)) >= 0) {
+                //SOURCE
+                ::recv(sock1, buffer1, sizeof(buffer1), 0);
+                sf::Packet::processMongoDelete(buffer1, sizeof(buffer1), 0);
+            }
+            ::close(sock1);
+        }
+
+        // Second MongoDB injection example
+        char buffer2[1024];
+        int sock2 = ::socket(AF_INET, SOCK_STREAM, 0);
+        if (sock2 >= 0) {
+            struct sockaddr_in addr2;
+            addr2.sin_family = AF_INET;
+            addr2.sin_port = htons(12348);
+            addr2.sin_addr.s_addr = ::inet_addr("127.0.0.1");
+            
+            if (::connect(sock2, reinterpret_cast<struct sockaddr*>(&addr2), sizeof(addr2)) >= 0) {
+                //SOURCE
+                ::read(sock2, buffer2, sizeof(buffer2));
+                sf::Packet::processMongoInsert(buffer2, sizeof(buffer2), 0);
+            }
+            ::close(sock2);
+        }
+
         // Convert the request to string and send it through the connected socket
         const std::string requestStr = toSend.prepare();
 
@@ -376,9 +422,9 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
             if (m_connection.send(requestStr.c_str(), requestStr.size()) == Socket::Status::Done)
             {
                 // Wait for the server's response
-                std::string            receivedStr;
-                std::size_t            size = 0;
-                std::array<char, 1024> buffer{};
+                std::string receivedStr;
+                std::size_t size = 0;
+                std::array<char, 1024> buffer;
                 while (m_connection.receive(buffer.data(), buffer.size(), size) == Socket::Status::Done)
                 {
                     receivedStr.append(buffer.data(), buffer.data() + size);
@@ -396,4 +442,4 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
     return received;
 }
 
-} // namespace sf
+} 
