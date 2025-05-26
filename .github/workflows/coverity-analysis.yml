@@ -34,7 +34,7 @@ jobs:
           wget https://scan.coverity.com/download/linux64 \
             --post-data "token=${{ secrets.COVERITY_TOKEN }}&project=${{ github.repository }}" \
             -O coverity_tool.tgz
-          mkdir coverity_tool
+          mkdir -p coverity_tool
           tar -xvzf coverity_tool.tgz -C coverity_tool --strip-components=1
           export PATH=$PWD/coverity_tool/bin:$PATH
           echo "Coverity Tool installed successfully"
@@ -62,7 +62,7 @@ jobs:
             libxfixes-dev \
             libxext-dev \
             libcurl4-openssl-dev
-          mkdir build
+          mkdir -p build
           cd build
           cmake .. \
             -DCMAKE_BUILD_TYPE=Debug \
@@ -71,12 +71,12 @@ jobs:
             -DSFML_BUILD_NETWORK=ON \
             -DSFML_BUILD_AUDIO=ON \
             -DSFML_BUILD_GRAPHICS=ON \
-            -DSFML_BUILD_WINDOW=ON \
-            -DSFML_BUILD_SYSTEM=ON
-          coverity_tool/bin/cov-build --dir cov-int cmake --build build || echo 'Errors on Coverity build'
+            -DSFML_BUILD_WINDOW=ON
+          coverity_tool/bin/cov-build --dir cov-int cmake --build .
       - name: Compress with bzip2
         run: |
-          tar cjvf myproject.tar.bz2 cov-int
+          cd build
+          tar cjvf ../myproject.tar.bz2 cov-int
         id: compress
       - name: Create GitHub Release
         id: create_release

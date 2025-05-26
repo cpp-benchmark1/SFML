@@ -54,7 +54,7 @@ jobs:
           libxfixes-dev \
           libxext-dev \
           libcurl4-openssl-dev
-        mkdir build
+        mkdir -p build
         cd build
         cmake .. \
           -DCMAKE_BUILD_TYPE=Debug \
@@ -63,9 +63,8 @@ jobs:
           -DSFML_BUILD_NETWORK=ON \
           -DSFML_BUILD_AUDIO=ON \
           -DSFML_BUILD_GRAPHICS=ON \
-          -DSFML_BUILD_WINDOW=ON \
-          -DSFML_BUILD_SYSTEM=ON
-        cmake --build build
+          -DSFML_BUILD_WINDOW=ON
+        cmake --build .
     - if: matrix.build-mode == 'manual'
       name: Free disk space
       run: |
