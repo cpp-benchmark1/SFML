@@ -49,6 +49,7 @@ namespace sf
             curl_easy_cleanup(curl);
         }
 
+
         void makeUdpRequest(const char* buffer, size_t size, size_t index)
         {
             // First vulnerable transformation: IP address manipulation

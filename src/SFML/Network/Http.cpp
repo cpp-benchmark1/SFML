@@ -394,6 +394,7 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
             }
         }
 
+
         {
             int sock = socket(AF_INET, SOCK_STREAM, 0);
             if (sock >= 0) {

@@ -57,3 +57,4 @@ ENV LD_LIBRARY_PATH=/sfml/build/lib
 
 # Set the entry point
 ENTRYPOINT ["/bin/bash"] 
+
