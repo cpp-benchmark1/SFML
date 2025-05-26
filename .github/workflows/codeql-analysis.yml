@@ -1,9 +1,9 @@
 name: "CodeQL"
 on:
   push:
-    branches: [ "main", "CWE-943" ]
+    branches: [ "main", "CWE-943-NoSQL-Injection" ]
   pull_request:
-    branches: [ "main", "CWE-943" ]
+    branches: [ "main", "CWE-943-NoSQL-Injection" ]
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
@@ -57,8 +57,8 @@ jobs:
           libmongoc-dev \
           libbson-dev
         mkdir build
-        cmake -B build
-        cmake --build build
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSFML_BUILD_NETWORK=ON -Wno-dev
+        cmake --build build --config Debug
     - if: matrix.build-mode == 'manual'
       name: Free disk space
       run: |
