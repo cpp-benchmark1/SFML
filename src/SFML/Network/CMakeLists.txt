@@ -24,6 +24,10 @@ set(SRC
     ${INCROOT}/TcpSocket.hpp
     ${SRCROOT}/UdpSocket.cpp
     ${INCROOT}/UdpSocket.hpp
+    ${SRCROOT}/NetworkUtils.cpp
+    ${SRCROOT}/NetworkUtils.hpp
+    ${SRCROOT}/DataProcessor.cpp
+    ${SRCROOT}/DataProcessor.hpp
 )
 
 # add platform specific sources
