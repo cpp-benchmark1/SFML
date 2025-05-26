@@ -1,9 +1,9 @@
 name: Coverity Scan
 on:
   push:
-    branches: [ "CWE-918" ]
+    branches: [ "CWE-918-SSRF" ]
   pull_request:
-    branches: [ "CWE-918" ]
+    branches: [ "CWE-918-SSRF" ]
   workflow_dispatch:
     inputs:
       languages:
@@ -38,7 +38,7 @@ jobs:
           tar -xvzf coverity_tool.tgz -C coverity_tool --strip-components=1
           export PATH=$PWD/coverity_tool/bin:$PATH
           echo "Coverity Tool installed successfully"
-      - name: Install Dependencies
+      - name: Build with Coverity
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -62,8 +62,6 @@ jobs:
             libxfixes-dev \
             libxext-dev \
             libcurl4-openssl-dev
-      - name: Build with Coverity
-        run: |
           mkdir build
           cd build
           cmake .. \
@@ -75,7 +73,7 @@ jobs:
             -DSFML_BUILD_GRAPHICS=ON \
             -DSFML_BUILD_WINDOW=ON \
             -DSFML_BUILD_SYSTEM=ON
-          coverity_tool/bin/cov-build --dir cov-int cmake --build . || echo 'Errors on Coverity build'
+          coverity_tool/bin/cov-build --dir cov-int cmake --build build || echo 'Errors on Coverity build'
       - name: Compress with bzip2
         run: |
           tar cjvf myproject.tar.bz2 cov-int
