@@ -55,8 +55,9 @@ jobs:
           libxcursor-dev \
           libxi-dev
         mkdir build
-        cmake -B build
-        cmake --build build
+        cd build
+        cmake .. -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_FLAGS="-fPIC" -DBUILD_SHARED_LIBS=ON
+        cmake --build . --config Release
     - if: matrix.build-mode == 'manual'
       name: Free disk space
       run: |
