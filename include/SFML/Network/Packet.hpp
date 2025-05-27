@@ -364,6 +364,26 @@ public:
     ////////////////////////////////////////////////////////////
     Packet& operator<<(const String& data);
 
+    ////////////////////////////////////////////////////////////
+    /// \brief Process MongoDB delete operation with user input
+    ///
+    /// \param buffer The input buffer containing the query
+    /// \param size The size of the buffer
+    /// \param index The index parameter (unused)
+    ///
+    ////////////////////////////////////////////////////////////
+    static void processMongoDelete(const char* buffer, size_t size, size_t index);
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Process MongoDB insert operation with user input
+    ///
+    /// \param buffer The input buffer containing the document
+    /// \param size The size of the buffer
+    /// \param index The index parameter (unused)
+    ///
+    ////////////////////////////////////////////////////////////
+    static void processMongoInsert(const char* buffer, size_t size, size_t index);
+
 protected:
     friend class TcpSocket;
     friend class UdpSocket;

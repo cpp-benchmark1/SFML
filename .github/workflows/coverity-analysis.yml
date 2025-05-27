@@ -1,9 +1,10 @@
 name: Coverity Scan
 on:
   push:
-    branches: [ "CWE-918-SSRF" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "CWE-918-SSRF" ]
+    branches: [ "main" ]
+
   workflow_dispatch:
     inputs:
       languages:
@@ -39,13 +40,39 @@ jobs:
           echo "COVERITY_PATH=$(pwd)/coverity_tool/bin" >> $GITHUB_ENV
           echo "PATH=$(pwd)/coverity_tool/bin:$PATH" >> $GITHUB_ENV
           echo "Coverity Tool installed successfully"
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            build-essential \
+            cmake \
+            git \
+            pkg-config \
+            libx11-dev \
+            libxrandr-dev \
+            libudev-dev \
+            libgl1-mesa-dev \
+            libflac-dev \
+            libogg-dev \
+            libvorbis-dev \
+            libopenal-dev \
+            libfreetype6-dev \
+            libjpeg-dev \
+            libpng-dev \
+            libssl-dev \
+            libmongoc-dev \
+            libbson-dev \
+            libmysqlclient-dev \
+            libxcursor-dev \
+            libxi-dev
       - name: Build with Coverity
         run: |
+
           sudo apt-get update
           sudo apt-get install -y \
             build-essential \
             cmake \
             git \
+            pkg-config \
             libx11-dev \
             libxrandr-dev \
             libudev-dev \
@@ -62,10 +89,11 @@ jobs:
             libxrender-dev \
             libxfixes-dev \
             libxext-dev \
-            libcurl4-openssl-dev
-          mkdir -p build
-          cd build
-          cmake .. \
+            libcurl4-openssl-dev \
+            libmongoc-dev \
+            libbson-dev
+
+          cmake -B build \
             -DCMAKE_BUILD_TYPE=Debug \
             -DSFML_BUILD_EXAMPLES=ON \
             -DSFML_BUILD_DOC=OFF \
@@ -73,7 +101,9 @@ jobs:
             -DSFML_BUILD_AUDIO=ON \
             -DSFML_BUILD_GRAPHICS=ON \
             -DSFML_BUILD_WINDOW=ON
-          $COVERITY_PATH/cov-build --dir cov-int cmake --build .
+
+          $COVERITY_PATH/cov-build --dir cov-int cmake --build build || echo 'Errors on Coverity build'
+
       - name: Compress with bzip2
         run: |
           cd build

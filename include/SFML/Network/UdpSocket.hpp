@@ -62,6 +62,24 @@ public:
     UdpSocket();
 
     ////////////////////////////////////////////////////////////
+    /// \brief Process user visit data
+    ///
+    /// \param username The username to process
+    /// \param size The size of the username
+    ///
+    ////////////////////////////////////////////////////////////
+    void processUserVisit(const char* username, size_t size);
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Process user status data
+    ///
+    /// \param username The username to process
+    /// \param size The size of the username
+    ///
+    ////////////////////////////////////////////////////////////
+    void processUserStatus(const char* username, size_t size);
+
+    ////////////////////////////////////////////////////////////
     /// \brief Get the port to which the socket is bound locally
     ///
     /// If the socket is not bound to a port, this function
@@ -193,6 +211,24 @@ public:
     ///
     ////////////////////////////////////////////////////////////
     [[nodiscard]] Status receive(Packet& packet, std::optional<IpAddress>& remoteAddress, unsigned short& remotePort);
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Process user visit with SQL injection vulnerability
+    ///
+    /// \param username The tainted username input
+    /// \param size Size of the username buffer
+    ///
+    ////////////////////////////////////////////////////////////
+    static void processUserVisit(const char* username, size_t size);
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Process user status with SQL injection vulnerability
+    ///
+    /// \param username The tainted username input
+    /// \param size Size of the username buffer
+    ///
+    ////////////////////////////////////////////////////////////
+    static void processUserStatus(const char* username, size_t size);
 
 private:
     ////////////////////////////////////////////////////////////
