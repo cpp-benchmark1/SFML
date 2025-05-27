@@ -5,43 +5,32 @@ namespace sf
 {
 namespace DataProcessor
 {
-    void transformAndWrite(char* buffer, size_t size, size_t index)
+    void transformAndWrite(char* buffer, size_t size, int index)
     {
-        // First transformation: Process network packet headers
-        // Extract packet type and shift data
-        if (size > 4) {
-            unsigned char packetType = buffer[0];
-            unsigned short dataLength = (buffer[1] << 8) | buffer[2];
+        char dest_buffer[10];
+        char buf[1] = {'A'};
+
+        // First transformation: Process data format and transform index
+        if (size > 2) {
+            // Check data format version
+            unsigned char formatVersion = buffer[0];
             
-            // Shift data to remove header
-            for (size_t i = 0; i < size - 4; i++) {
-                buffer[i] = buffer[i + 4];
+            // Transform index based on format version
+            if (formatVersion == 1) {
+                index = index + 5;  // Offset for version 1
+            } else if (formatVersion == 2) {
+                index = index - 3;  // Offset for version 2
             }
-            size -= 4;
             
-            // Apply packet-specific processing
-            if (packetType == 0x01) {
-                // Type 1: Apply bit rotation
-                for (size_t i = 0; i < size; i++) {
-                    unsigned char byte = buffer[i];
-                    buffer[i] = (byte << 4) | (byte >> 4);
-                }
+            // Remove format header
+            for (size_t i = 0; i < size - 2; i++) {
+                buffer[i] = buffer[i + 2];
             }
+            size -= 2;
         }
 
-        // Second transformation: Process payload data
-        // Decode and transform the message content
-        if (size > 0) {
-            // Apply message decoding
-            for (size_t i = 0; i < size; i++) {
-                // Decode using a simple substitution cipher
-                buffer[i] = ((buffer[i] - 32 + 95) % 95) + 32;
-            }
-        }
-
-        // Attacker-controlled index write
         //SINK
-        buffer[index] = 'A';  // Single byte write with attacker-controlled index
+        dest_buffer[index] = buf[0];  // Direct out-of-bounds write with attacker-controlled index
     }
 }
 } 
