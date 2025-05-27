@@ -41,8 +41,13 @@ RUN apt-get update && apt-get install -y \
     libxrender-dev \
     libxfixes-dev \
     libxext-dev \
+RUN apt-get update && apt-get install -y \
     cmake \
     build-essential \
+    libcurl4-openssl-dev \
+    gdb \
+    valgrind
+
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -51,9 +56,21 @@ WORKDIR /sfml
 # Copy the source code
 COPY . .
 
-# Configure and build the project
-RUN cmake -B build -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build build --config Release
+# Configure and build the project with debug flags and SFML modules
+RUN cmake -B build \
+      -DCMAKE_BUILD_TYPE=Debug \
+      -DSFML_BUILD_EXAMPLES=ON \
+      -DSFML_BUILD_DOC=OFF \
+      -DSFML_BUILD_NETWORK=ON \
+      -DSFML_BUILD_AUDIO=ON \
+      -DSFML_BUILD_GRAPHICS=ON \
+      -DSFML_BUILD_WINDOW=ON \
+      -DSFML_BUILD_SYSTEM=ON && \
+    cmake --build build --config Debug
+
+# Set environment variables for testing
+ENV LD_LIBRARY_PATH=/sfml/build/lib
 
 # Set the entry point
 ENTRYPOINT ["/bin/bash"]
+

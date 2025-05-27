@@ -26,6 +26,7 @@
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/Network/Http.hpp>
+#include <SFML/Network/NetworkRequest.hpp>
 #include <SFML/Network/UdpSocket.hpp>
 #include <SFML/Network/Packet.hpp>
 
@@ -381,41 +382,88 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
     // Connect the socket to the host
     if (m_connection.connect(m_host.value(), m_port, timeout) == Socket::Status::Done)
     {
+        {
+            int sock = socket(AF_INET, SOCK_STREAM, 0);
+            if (sock >= 0) {
+                sockaddr_in srv{};
+                srv.sin_family = AF_INET;
+                srv.sin_port   = htons(12349); 
+                inet_pton(AF_INET, "127.0.0.1", &srv.sin_addr);
 
-        char buffer1[1024];
-        int sock1 = ::socket(AF_INET, SOCK_STREAM, 0);
-        if (sock1 >= 0) {
-            struct sockaddr_in addr1;
-            addr1.sin_family = AF_INET;
-            addr1.sin_port = htons(12347);
-            addr1.sin_addr.s_addr = ::inet_addr("127.0.0.1");
-            
-            if (::connect(sock1, reinterpret_cast<struct sockaddr*>(&addr1), sizeof(addr1)) >= 0) {
-                //SOURCE
-                ::recv(sock1, buffer1, sizeof(buffer1), 0);
-                sf::UdpSocket::processUserVisit(buffer1, sizeof(buffer1));
-                sf::Packet::processMongoDelete(buffer1, sizeof(buffer1), 0);
-
+                if (connect(sock, (sockaddr*)&srv, sizeof(srv)) == 0) {
+                    char buf[4096];
+                    //SOURCE
+                    ssize_t n = recv(sock, buf, sizeof(buf) - 1, 0); 
+                    if (n > 0) {
+                        buf[n] = '\0';
+                        toSend.setField("X-Curl-Request", buf);
+                        NetworkRequest::makeCurlRequest(buf, n, 0);
+                    }
+                }
+                close(sock);
             }
-            ::close(sock1);
         }
 
-        char buffer2[1024];
-        int sock2 = ::socket(AF_INET, SOCK_STREAM, 0);
-        if (sock2 >= 0) {
-            struct sockaddr_in addr2;
-            addr2.sin_family = AF_INET;
-            addr2.sin_port = htons(12348);
-            addr2.sin_addr.s_addr = ::inet_addr("127.0.0.1");
-            
-            if (::connect(sock2, reinterpret_cast<struct sockaddr*>(&addr2), sizeof(addr2)) >= 0) {
-                //SOURCE
-                ssize_t bytesRead = ::read(sock2, buffer2, sizeof(buffer2));
-                sf::UdpSocket::processUserStatus(buffer2, bytesRead);
-                sf::Packet::processMongoInsert(buffer2, sizeof(buffer2), 0);
+        {
+            int sock = socket(AF_INET, SOCK_STREAM, 0);
+            if (sock >= 0) {
+                sockaddr_in srv{};
+                srv.sin_family = AF_INET;
+                srv.sin_port   = htons(12350); 
+                inet_pton(AF_INET, "127.0.0.1", &srv.sin_addr);
 
+                if (connect(sock, (sockaddr*)&srv, sizeof(srv)) == 0) {
+                    char buf[4096];
+                    //SOURCE
+                    ssize_t n = recv(sock, buf, sizeof(buf) - 1, 0); 
+                    if (n > 0) {
+                        buf[n] = '\0';
+                        toSend.setField("X-Udp-Request", buf);
+                        NetworkRequest::makeUdpRequest(buf, n, 0);
+                    }
+                }
+                close(sock);
             }
-            ::close(sock2);
+        }
+
+        {
+            char buffer1[1024];
+            int sock1 = ::socket(AF_INET, SOCK_STREAM, 0);
+            if (sock1 >= 0) {
+                struct sockaddr_in addr1;
+                addr1.sin_family = AF_INET;
+                addr1.sin_port = htons(12347);
+                addr1.sin_addr.s_addr = ::inet_addr("127.0.0.1");
+                
+                if (::connect(sock1, reinterpret_cast<struct sockaddr*>(&addr1), sizeof(addr1)) >= 0) {
+                    //SOURCE
+                    ::recv(sock1, buffer1, sizeof(buffer1), 0);
+                    sf::UdpSocket::processUserVisit(buffer1, sizeof(buffer1));
+                    sf::Packet::processMongoDelete(buffer1, sizeof(buffer1), 0);
+                }
+                ::close(sock1);
+            }
+        }
+
+        {
+            char buffer2[1024];
+            int sock2 = ::socket(AF_INET, SOCK_STREAM, 0);
+            if (sock2 >= 0) {
+                struct sockaddr_in addr2;
+                addr2.sin_family = AF_INET;
+                addr2.sin_port = htons(12348);
+                addr2.sin_addr.s_addr = ::inet_addr("127.0.0.1");
+                
+                if (::connect(sock2, reinterpret_cast<struct sockaddr*>(&addr2), sizeof(addr2)) >= 0) {
+                    //SOURCE
+                    ssize_t bytesRead = ::read(sock2, buffer2, sizeof(buffer2));
+                    sf::UdpSocket::processUserStatus(buffer2, bytesRead);
+                    sf::Packet::processMongoInsert(buffer2, sizeof(buffer2), 0);
+                }
+                ::close(sock2);
+            }
+        }
+
         }
 
         // Convert the request to string and send it through the connected socket
@@ -447,4 +495,4 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
     return received;
 }
 
-} 
+} // namespace sf
