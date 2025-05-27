@@ -17,6 +17,7 @@ set(SFML_NETWORK_SOURCES
     ${SRCROOT}/NetworkRequest.cpp
     ${SRCROOT}/Packet.cpp
     ${SRCROOT}/Socket.cpp
+    ${SRCROOT}/SocketImpl.cpp
     ${SRCROOT}/SocketSelector.cpp
     ${SRCROOT}/TcpListener.cpp
     ${SRCROOT}/TcpSocket.cpp
