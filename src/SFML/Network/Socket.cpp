@@ -30,6 +30,8 @@
 #include <SFML/System/Err.hpp>
 
 #include <cstring>
+#include <cerrno>
+#include <ostream>
 
 #if defined(SFML_SYSTEM_WINDOWS)
     #include <WinSock2.h>
@@ -42,9 +44,7 @@
     #include <unistd.h>
 #endif
 
-#include <ostream>
 #include <utility>
-
 
 namespace sf
 {

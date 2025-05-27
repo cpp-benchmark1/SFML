@@ -29,6 +29,8 @@
 ////////////////////////////////////////////////////////////
 #include <SFML/Network/Socket.hpp>
 #include <SFML/Network/SocketHandle.hpp>
+#include <SFML/Network/Export.hpp>
+#include <SFML/System/Err.hpp>
 
 #if defined(SFML_SYSTEM_WINDOWS)
 
@@ -52,7 +54,9 @@
 #endif
 
 #include <cstdint>
-
+#include <cstring>
+#include <cerrno>
+#include <ostream>
 
 namespace sf::priv
 {

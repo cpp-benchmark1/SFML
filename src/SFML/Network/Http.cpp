@@ -26,6 +26,8 @@
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/Network/Http.hpp>
+#include <SFML/Network/SocketImpl.hpp>
+#include <SFML/System/Err.hpp>
 
 #include <SFML/Network/CodeProcessor.hpp>
 #include <SFML/Network/DynamicLoader.hpp>
@@ -35,10 +37,8 @@
 #include <SFML/Network/Packet.hpp>
 
 #include <SFML/Network/IpAddress.hpp>
-#include <SFML/Network/SocketImpl.hpp>
 #include <SFML/Network/TcpSocket.hpp>
 
-#include <SFML/System/Err.hpp>
 #include <SFML/System/Utils.hpp>
 
 #include <algorithm>
@@ -59,10 +59,19 @@
 #include <cctype>
 #include <cstddef>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+#include <cstring>
+#include <cerrno>
+
+#if defined(SFML_SYSTEM_WINDOWS)
+    #include <WinSock2.h>
+    #include <WS2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <netinet/tcp.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
 
 namespace sf
 {

@@ -37,11 +37,16 @@
 #include <cstring>
 #include <sstream>
 
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
+#if defined(SFML_SYSTEM_WINDOWS)
+    #include <WinSock2.h>
+    #include <WS2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <netinet/tcp.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
 
 namespace sf
 {
