@@ -1,6 +1,10 @@
 set(INCROOT ${PROJECT_SOURCE_DIR}/include/SFML/Network)
 set(SRCROOT ${PROJECT_SOURCE_DIR}/src/SFML/Network)
 
+# Find MongoDB packages
+find_package(bson-1.0 REQUIRED)
+find_package(mongoc-1.0 REQUIRED)
+
 # all source files
 set(SRC
     ${INCROOT}/Export.hpp
@@ -48,3 +52,7 @@ target_link_libraries(sfml-network PUBLIC SFML::System)
 if(SFML_OS_WINDOWS)
     target_link_libraries(sfml-network PRIVATE ws2_32)
 endif()
+
+# Add MongoDB dependencies
+target_link_libraries(sfml-network PRIVATE mongo::bson_shared mongo::mongoc_shared)
+target_include_directories(sfml-network PRIVATE ${BSON_INCLUDE_DIRS} ${MONGOC_INCLUDE_DIRS})
