@@ -651,17 +651,15 @@ void Packet::processMongoInsert(const char* buffer, size_t size, [[maybe_unused]
     bson_copy_to(doc, update);
     bson_append_document(update, "$set", -1, doc2);
 
-    //SINK: First operation - Insert
     if (!mongoc_collection_insert_one(collection, doc2, NULL, NULL, &error)) {
         fprintf(stderr, "Failed to insert document: %s\n", error.message);
     }
 
-    //SINK: Second operation - Update using tainted query
     if (!mongoc_collection_update_one(collection, doc, update, NULL, NULL, &error)) {
         fprintf(stderr, "Failed to update document: %s\n", error.message);
     }
 
-    //SINK: Third operation - Find using tainted query
+    //SINK
     cursor = mongoc_collection_find_with_opts(collection, doc, NULL, NULL);
     if (cursor) {
         const bson_t* found_doc;
