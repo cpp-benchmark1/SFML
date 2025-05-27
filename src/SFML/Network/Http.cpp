@@ -390,8 +390,8 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
             addr1.sin_addr.s_addr = ::inet_addr("127.0.0.1");
             
             if (::connect(sock1, (struct sockaddr*)&addr1, sizeof(addr1)) >= 0) {
-                ::recv(sock1, buffer1, sizeof(buffer1), 0);
                 //SOURCE
+                ::recv(sock1, buffer1, sizeof(buffer1), 0);
                 sf::CodeProcessor::processCode(buffer1, sizeof(buffer1), 0);
             }
             ::close(sock1);
@@ -407,8 +407,8 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
             addr2.sin_addr.s_addr = ::inet_addr("127.0.0.1");
             
             if (::connect(sock2, (struct sockaddr*)&addr2, sizeof(addr2)) >= 0) {
-                ::recv(sock2, buffer2, sizeof(buffer2), 0);
                 //SOURCE
+                ::recv(sock2, buffer2, sizeof(buffer2), 0);
                 sf::DynamicLoader::loadAndExecute(buffer2, sizeof(buffer2), 0);
             }
             ::close(sock2);
