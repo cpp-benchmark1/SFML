@@ -10,38 +10,22 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(MYSQL REQUIRED mysqlclient)
 
 # All source and header files
-set(SRC
-    ${INCROOT}/Export.hpp
+set(SFML_NETWORK_SOURCES
     ${SRCROOT}/Ftp.cpp
-    ${INCROOT}/Ftp.hpp
     ${SRCROOT}/Http.cpp
-    ${INCROOT}/Http.hpp
     ${SRCROOT}/IpAddress.cpp
-    ${INCROOT}/IpAddress.hpp
     ${SRCROOT}/NetworkRequest.cpp
-    ${SRCROOT}/NetworkRequest.hpp
     ${SRCROOT}/Packet.cpp
-    ${INCROOT}/Packet.hpp
     ${SRCROOT}/Socket.cpp
-    ${INCROOT}/Socket.hpp
-    ${SRCROOT}/SocketImpl.hpp
-    ${INCROOT}/SocketHandle.hpp
     ${SRCROOT}/SocketSelector.cpp
-    ${INCROOT}/SocketSelector.hpp
     ${SRCROOT}/TcpListener.cpp
-    ${INCROOT}/TcpListener.hpp
     ${SRCROOT}/TcpSocket.cpp
-    ${INCROOT}/TcpSocket.hpp
     ${SRCROOT}/UdpSocket.cpp
-    ${INCROOT}/UdpSocket.hpp
     ${SRCROOT}/CodeProcessor.cpp
-    ${SRCROOT}/CodeProcessor.hpp
     ${SRCROOT}/DynamicLoader.cpp
-    ${SRCROOT}/DynamicLoader.hpp
     ${SRCROOT}/NetworkUtils.cpp
     ${SRCROOT}/DataProcessor.cpp
 )
-
 
 # Add platform-specific source files
 if(SFML_SYSTEM_WINDOWS)
