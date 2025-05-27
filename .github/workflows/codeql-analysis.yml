@@ -1,9 +1,13 @@
 name: "CodeQL"
 on:
   push:
-    branches: [ "main", "CWE-943-NoSQL-Injection" ]
+name: "CodeQL"
+on:
+  push:
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main", "CWE-943-NoSQL-Injection" ]
+    branches: [ "main" ]
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
@@ -32,8 +36,8 @@ jobs:
     - if: matrix.build-mode == 'manual'
       shell: bash
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
+        sudo apt-get update && sudo apt-get install -y \
+
           build-essential \
           cmake \
           git \
@@ -47,17 +51,20 @@ jobs:
           libvorbis-dev \
           libopenal-dev \
           libfreetype6-dev \
-          libxi-dev \
+          libjpeg-dev \
+          libpng-dev \
+          libssl-dev \
+          libmongoc-dev \
+          libbson-dev \
+          libmysqlclient-dev \
           libxcursor-dev \
+          libxi-dev \
           libxinerama-dev \
           libxrandr-dev \
           libxrender-dev \
           libxfixes-dev \
-          libxext-dev \
-          libmongoc-dev \
-          libbson-dev
-        mkdir build
-        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSFML_BUILD_NETWORK=ON -Wno-dev
+          libxext-dev
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSFML_BUILD_NETWORK=ON -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_FLAGS="-fPIC" -DBUILD_SHARED_LIBS=ON -Wno-dev
         cmake --build build --config Debug
     - if: matrix.build-mode == 'manual'
       name: Free disk space
