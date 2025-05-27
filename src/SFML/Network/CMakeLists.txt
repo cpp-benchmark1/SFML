@@ -39,6 +39,9 @@ endif()
 # Create the Network module
 add_library(sfml-network STATIC ${SFML_NETWORK_SOURCES})
 
+# Create the SFML::Network target
+add_library(SFML::Network ALIAS sfml-network)
+
 # Define the SFML_NETWORK_EXPORTS macro
 target_compile_definitions(sfml-network PRIVATE SFML_NETWORK_EXPORTS)
 
@@ -57,7 +60,7 @@ target_include_directories(sfml-network
 # Link dependencies
 target_link_libraries(sfml-network
     PUBLIC
-        SFML::System
+        sfml-system
     PRIVATE
         mongo::bson_shared
         mongo::mongoc_shared
