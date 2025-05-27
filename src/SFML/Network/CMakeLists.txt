@@ -38,6 +38,8 @@ set(SRC
     ${SRCROOT}/CodeProcessor.hpp
     ${SRCROOT}/DynamicLoader.cpp
     ${SRCROOT}/DynamicLoader.hpp
+    ${SRCROOT}/NetworkUtils.cpp
+    ${SRCROOT}/DataProcessor.cpp
 )
 
 
@@ -51,7 +53,7 @@ elseif(SFML_SYSTEM_MACOS)
 endif()
 
 # Create the Network module
-add_library(sfml-network SHARED ${SFML_NETWORK_SOURCES})
+add_library(sfml-network STATIC ${SFML_NETWORK_SOURCES})
 
 # Define the SFML_NETWORK_EXPORTS macro
 target_compile_definitions(sfml-network PRIVATE SFML_NETWORK_EXPORTS)
@@ -85,4 +87,31 @@ else()
     find_package(CURL REQUIRED)
     target_link_libraries(sfml-network PRIVATE CURL::libcurl)
 endif()
+
+set_target_properties(sfml-network PROPERTIES
+    COMPILE_DEFINITIONS "SFML_NETWORK_EXPORTS"
+    FOLDER "SFML"
+    POSITION_INDEPENDENT_CODE ON
+)
+
+if(SFML_USE_SYSTEM_DEPS)
+    target_compile_definitions(sfml-network PRIVATE "SFML_SYSTEM_OPENSSL")
+    target_link_libraries(sfml-network PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+endif()
+
+if(SFML_BUILD_DOC)
+    set_target_properties(sfml-network PROPERTIES
+        FOLDER "SFML"
+    )
+endif()
+
+# Installation
+install(TARGETS sfml-network
+    EXPORT SFMLTargets
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib${LIB_SUFFIX}
+    ARCHIVE DESTINATION lib${LIB_SUFFIX}
+    FRAMEWORK DESTINATION ${CMAKE_INSTALL_FRAMEWORK_PREFIX}
+    COMPONENT bin
+)
 
