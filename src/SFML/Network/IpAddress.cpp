@@ -46,6 +46,7 @@
     #include <netinet/tcp.h>
     #include <arpa/inet.h>
     #include <unistd.h>
+    #include <netdb.h>  // For getaddrinfo, freeaddrinfo, addrinfo
 #endif
 
 namespace sf
