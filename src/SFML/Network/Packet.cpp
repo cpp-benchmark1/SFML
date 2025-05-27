@@ -45,11 +45,6 @@
 namespace sf
 {
 ////////////////////////////////////////////////////////////
-Packet::Packet() : m_readPos(0), m_sendPos(0), m_isValid(true)
-{
-}
-
-////////////////////////////////////////////////////////////
 void Packet::append(const void* data, std::size_t sizeInBytes)
 {
     if (data && (sizeInBytes > 0))
