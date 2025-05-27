@@ -99,7 +99,10 @@ jobs:
             -DSFML_BUILD_NETWORK=ON \
             -DSFML_BUILD_AUDIO=ON \
             -DSFML_BUILD_GRAPHICS=ON \
-            -DSFML_BUILD_WINDOW=ON
+            -DSFML_BUILD_WINDOW=ON \
+            -DCMAKE_CXX_FLAGS="-fPIC" \
+            -DCMAKE_C_FLAGS="-fPIC" \
+            -DBUILD_SHARED_LIBS=ON
 
           $COVERITY_PATH/cov-build --dir cov-int cmake --build build || echo 'Errors on Coverity build'
 

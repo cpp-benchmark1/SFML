@@ -52,6 +52,7 @@ target_include_directories(sfml-network
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${SRCROOT}
+        ${PROJECT_SOURCE_DIR}/include
         ${MONGOC_INCLUDE_DIRS}
         ${BSON_INCLUDE_DIRS}
         ${MYSQL_INCLUDE_DIRS}
