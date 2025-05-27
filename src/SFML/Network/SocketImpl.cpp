@@ -2,6 +2,7 @@
 
 #include <SFML/System/Err.hpp>
 
+#include <cstring>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -12,9 +13,9 @@ namespace sf
 {
 namespace priv
 {
-    SocketHandle SocketImpl::create()
+    SocketHandle SocketImpl::create(Type type)
     {
-        return ::socket(AF_INET, SOCK_STREAM, 0);
+        return ::socket(AF_INET, type == Type::TCP ? SOCK_STREAM : SOCK_DGRAM, 0);
     }
 
     void SocketImpl::close(SocketHandle handle)
