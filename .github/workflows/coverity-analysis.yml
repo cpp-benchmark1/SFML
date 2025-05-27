@@ -66,7 +66,6 @@ jobs:
             libxi-dev
       - name: Build with Coverity
         run: |
-
           sudo apt-get update
           sudo apt-get install -y \
             build-essential \

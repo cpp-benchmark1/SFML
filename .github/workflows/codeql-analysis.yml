@@ -99,6 +99,7 @@ jobs:
           sudo apt-get purge '~n ^dotnet' -f -y  || true
           sudo apt-get autoremove -y || true
           sudo apt-get autoclean -y || true
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:

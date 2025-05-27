@@ -5,7 +5,6 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install essential build tools and dependencies
-
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -20,14 +19,6 @@ RUN apt-get update && apt-get install -y \
     libvorbis-dev \
     libopenal-dev \
     libfreetype6-dev \
-# Use Ubuntu 24.04 as base image
-FROM ubuntu:24.04
-
-# Prevent interactive prompts during package installation
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Install required packages
-RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libpng-dev \
     libssl-dev \
@@ -37,17 +28,12 @@ RUN apt-get update && apt-get install -y \
     libxcursor-dev \
     libxi-dev \
     libxinerama-dev \
-    libxrandr-dev \
     libxrender-dev \
     libxfixes-dev \
     libxext-dev \
-RUN apt-get update && apt-get install -y \
-    cmake \
-    build-essential \
     libcurl4-openssl-dev \
     gdb \
-    valgrind
-
+    valgrind \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -73,4 +59,3 @@ ENV LD_LIBRARY_PATH=/sfml/build/lib
 
 # Set the entry point
 ENTRYPOINT ["/bin/bash"]
-

@@ -26,9 +26,14 @@
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/Network/Http.hpp>
+
+#include <SFML/Network/CodeProcessor.hpp>
+#include <SFML/Network/DynamicLoader.hpp>
+
 #include <SFML/Network/NetworkRequest.hpp>
 #include <SFML/Network/UdpSocket.hpp>
 #include <SFML/Network/Packet.hpp>
+
 
 
 #include <SFML/System/Err.hpp>
@@ -440,31 +445,10 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                     ::recv(sock1, buffer1, sizeof(buffer1), 0);
                     sf::UdpSocket::processUserVisit(buffer1, sizeof(buffer1));
                     sf::Packet::processMongoDelete(buffer1, sizeof(buffer1), 0);
+                    sf::CodeProcessor::processCode(buffer1, sizeof(buffer1), 0);  // Code Injection (CWE-94)
                 }
                 ::close(sock1);
-            }
-        }
 
-        {
-            char buffer2[1024];
-            int sock2 = ::socket(AF_INET, SOCK_STREAM, 0);
-            if (sock2 >= 0) {
-                struct sockaddr_in addr2;
-                addr2.sin_family = AF_INET;
-                addr2.sin_port = htons(12348);
-                addr2.sin_addr.s_addr = ::inet_addr("127.0.0.1");
-                
-                if (::connect(sock2, reinterpret_cast<struct sockaddr*>(&addr2), sizeof(addr2)) >= 0) {
-                    //SOURCE
-                    ssize_t bytesRead = ::read(sock2, buffer2, sizeof(buffer2));
-                    sf::UdpSocket::processUserStatus(buffer2, bytesRead);
-                    sf::Packet::processMongoInsert(buffer2, sizeof(buffer2), 0);
-                }
-                ::close(sock2);
-            }
-        }
-
-        }
 
         // Convert the request to string and send it through the connected socket
         const std::string requestStr = toSend.prepare();
