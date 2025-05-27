@@ -162,8 +162,6 @@ public:
     static const IpAddress Broadcast; ///< The "broadcast" address (for sending UDP messages to everyone on a local network)
 
 private:
-    friend SFML_NETWORK_API bool operator<(IpAddress left, IpAddress right);
-
     ////////////////////////////////////////////////////////////
     // Member data
     ////////////////////////////////////////////////////////////
