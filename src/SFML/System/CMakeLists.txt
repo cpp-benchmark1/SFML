@@ -23,8 +23,8 @@ set(SRC
     ${INCROOT}/Time.inl
     ${INCROOT}/Utf.hpp
     ${INCROOT}/Utf.inl
-    ${SRCROOT}/Utils.hpp
     ${SRCROOT}/Utils.cpp
+    ${INCROOT}/Utils.hpp
     ${SRCROOT}/Vector2.cpp
     ${INCROOT}/Vector2.hpp
     ${INCROOT}/Vector2.inl
@@ -36,11 +36,6 @@ set(SRC
     ${SRCROOT}/MemoryInputStream.cpp
     ${INCROOT}/MemoryInputStream.hpp
     ${INCROOT}/SuspendAwareClock.hpp
-    ${SRCROOT}/Lock.cpp
-    ${SRCROOT}/Mutex.cpp
-    ${SRCROOT}/NonCopyable.cpp
-    ${SRCROOT}/Thread.cpp
-    ${SRCROOT}/ThreadLocal.cpp
 )
 source_group("" FILES ${SRC})
 
