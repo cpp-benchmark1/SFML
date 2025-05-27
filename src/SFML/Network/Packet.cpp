@@ -205,7 +205,14 @@ Packet& Packet::operator>>(std::int64_t& data)
         for (std::size_t i = 0; i < sizeof(data); ++i)
             bytes[i] = static_cast<std::byte>(m_data[m_readPos + i]);
 
-        data = Utils::toInteger<std::int64_t>(bytes[7], bytes[6], bytes[5], bytes[4], bytes[3], bytes[2], bytes[1], bytes[0]);
+        data = static_cast<std::int64_t>(bytes[7]) << 56 |
+               static_cast<std::int64_t>(bytes[6]) << 48 |
+               static_cast<std::int64_t>(bytes[5]) << 40 |
+               static_cast<std::int64_t>(bytes[4]) << 32 |
+               static_cast<std::int64_t>(bytes[3]) << 24 |
+               static_cast<std::int64_t>(bytes[2]) << 16 |
+               static_cast<std::int64_t>(bytes[1]) << 8 |
+               static_cast<std::int64_t>(bytes[0]);
         m_readPos += sizeof(data);
     }
 
@@ -222,7 +229,14 @@ Packet& Packet::operator>>(std::uint64_t& data)
         for (std::size_t i = 0; i < sizeof(data); ++i)
             bytes[i] = static_cast<std::byte>(m_data[m_readPos + i]);
 
-        data = Utils::toInteger<std::uint64_t>(bytes[7], bytes[6], bytes[5], bytes[4], bytes[3], bytes[2], bytes[1], bytes[0]);
+        data = static_cast<std::uint64_t>(bytes[7]) << 56 |
+               static_cast<std::uint64_t>(bytes[6]) << 48 |
+               static_cast<std::uint64_t>(bytes[5]) << 40 |
+               static_cast<std::uint64_t>(bytes[4]) << 32 |
+               static_cast<std::uint64_t>(bytes[3]) << 24 |
+               static_cast<std::uint64_t>(bytes[2]) << 16 |
+               static_cast<std::uint64_t>(bytes[1]) << 8 |
+               static_cast<std::uint64_t>(bytes[0]);
         m_readPos += sizeof(data);
     }
 
@@ -290,7 +304,9 @@ Packet& Packet::operator>>(std::string& data)
     if ((length > 0) && checkSize(length))
     {
         // Then extract characters
-        data.assign(&m_data[m_readPos], length);
+        data.resize(length);
+        for (std::uint32_t i = 0; i < length; ++i)
+            data[i] = static_cast<char>(m_data[m_readPos + i]);
 
         // Update reading position
         m_readPos += length;
@@ -359,7 +375,7 @@ Packet& Packet::operator>>(String& data)
         {
             std::uint32_t character = 0;
             *this >> character;
-            data += character;
+            data += String(static_cast<char32_t>(character));
         }
     }
 
