@@ -48,11 +48,10 @@ target_compile_definitions(sfml-network PRIVATE SFML_NETWORK_EXPORTS)
 # Include directories
 target_include_directories(sfml-network
     PUBLIC
-        $<BUILD_INTERFACE:${INCROOT}>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${SRCROOT}
-        ${PROJECT_SOURCE_DIR}/include
         ${MONGOC_INCLUDE_DIRS}
         ${BSON_INCLUDE_DIRS}
         ${MYSQL_INCLUDE_DIRS}
