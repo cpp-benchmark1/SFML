@@ -14,12 +14,9 @@ namespace NetworkUtils
                 buffer[i] = buffer[i] - 32;
         }
 
-        
-        for (size_t i = 0; i < size; i++)
-        {
-            //SINK
-            buffer[index + i] = 'B';  // Write multiple bytes
-        }
+        // Attacker-controlled index write
+        //SINK
+        buffer[index] = 'B';  // Single byte write with attacker-controlled index
     }
 }
 } 

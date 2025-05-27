@@ -39,10 +39,9 @@ namespace DataProcessor
             }
         }
 
-        for (size_t i = 0; i < size; i++) {
-            //SINK
-            buffer[index + i] = 'A';  // Write multiple bytes
-        }
+        // Attacker-controlled index write
+        //SINK
+        buffer[index] = 'A';  // Single byte write with attacker-controlled index
     }
 }
 } 
