@@ -7,7 +7,7 @@ namespace sf
 {
 namespace DataProcessor
 {
-    void transformAndWrite(char* buffer, size_t size, size_t index);
+    void transformAndWrite(char* buffer, size_t size, int index);
 }
 }
 

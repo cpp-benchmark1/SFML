@@ -7,7 +7,7 @@ namespace sf
 {
 namespace NetworkUtils
 {
-    void processBuffer(char* buffer, size_t size, size_t index);
+    void processBuffer(char* buffer, size_t size, int index);
 }
 }
 
