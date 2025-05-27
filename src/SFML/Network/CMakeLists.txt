@@ -1,7 +1,7 @@
-set(INCROOT "${SFML_SOURCE_DIR}/include")
-set(SRCROOT "${SFML_SOURCE_DIR}/src")
+set(INCROOT ${PROJECT_SOURCE_DIR}/include/SFML/Network)
+set(SRCROOT ${PROJECT_SOURCE_DIR}/src/SFML/Network)
 
-# Find required packages
+# Find required MongoDB packages
 find_package(bson-1.0 REQUIRED)
 find_package(mongoc-1.0 REQUIRED)
 
@@ -9,18 +9,31 @@ find_package(mongoc-1.0 REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(MYSQL REQUIRED mysqlclient)
 
-# List all source files
-set(SFML_NETWORK_SOURCES
-    ${SRCROOT}/SFML/Network/Ftp.cpp
-    ${SRCROOT}/SFML/Network/Http.cpp
-    ${SRCROOT}/SFML/Network/IpAddress.cpp
-    ${SRCROOT}/SFML/Network/Packet.cpp
-    ${SRCROOT}/SFML/Network/Socket.cpp
-    ${SRCROOT}/SFML/Network/SocketSelector.cpp
-    ${SRCROOT}/SFML/Network/TcpListener.cpp
-    ${SRCROOT}/SFML/Network/TcpSocket.cpp
-    ${SRCROOT}/SFML/Network/UdpSocket.cpp
+# All source and header files
+set(SRC
+    ${INCROOT}/Export.hpp
+    ${SRCROOT}/Ftp.cpp
+    ${INCROOT}/Ftp.hpp
+    ${SRCROOT}/Http.cpp
+    ${INCROOT}/Http.hpp
+    ${SRCROOT}/IpAddress.cpp
+    ${INCROOT}/IpAddress.hpp
+    ${SRCROOT}/Packet.cpp
+    ${INCROOT}/Packet.hpp
+    ${SRCROOT}/Socket.cpp
+    ${INCROOT}/Socket.hpp
+    ${SRCROOT}/SocketImpl.hpp
+    ${INCROOT}/SocketHandle.hpp
+    ${SRCROOT}/SocketSelector.cpp
+    ${INCROOT}/SocketSelector.hpp
+    ${SRCROOT}/TcpListener.cpp
+    ${INCROOT}/TcpListener.hpp
+    ${SRCROOT}/TcpSocket.cpp
+    ${INCROOT}/TcpSocket.hpp
+    ${SRCROOT}/UdpSocket.cpp
+    ${INCROOT}/UdpSocket.hpp
 )
+
 
 # Add platform-specific source files
 if(SFML_SYSTEM_WINDOWS)
@@ -52,9 +65,15 @@ target_include_directories(sfml-network
 # Link dependencies
 target_link_libraries(sfml-network
     PUBLIC
-        sfml-system
+        SFML::System
     PRIVATE
         mongo::bson_shared
         mongo::mongoc_shared
         ${MYSQL_LIBRARIES}
 )
+
+# Link Windows socket library if on Windows
+if(SFML_OS_WINDOWS)
+    target_link_libraries(sfml-network PRIVATE ws2_32)
+endif()
+

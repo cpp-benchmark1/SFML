@@ -1,9 +1,10 @@
 name: Coverity Scan
 on:
   push:
-    branches: [ "CWE-89-SQL-Injection" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "CWE-89-SQL-Injection" ]
+    branches: [ "main" ]
+
   workflow_dispatch:
     inputs:
       languages:
@@ -64,8 +65,34 @@ jobs:
             libxi-dev
       - name: Build with Coverity
         run: |
+
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            git \
+            pkg-config \
+            libx11-dev \
+            libxrandr-dev \
+            libudev-dev \
+            libgl1-mesa-dev \
+            libflac-dev \
+            libogg-dev \
+            libvorbis-dev \
+            libopenal-dev \
+            libfreetype6-dev \
+            libxi-dev \
+            libxcursor-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxrender-dev \
+            libxfixes-dev \
+            libxext-dev \
+            libmongoc-dev \
+            libbson-dev
+
           mkdir build
-          cmake -B build
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSFML_BUILD_NETWORK=ON
           coverity_tool/bin/cov-build --dir cov-int cmake --build build || echo 'Errors on Coverity build'
       - name: Compress with bzip2
         run: |

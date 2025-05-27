@@ -298,3 +298,4 @@ void UdpSocket::processUserStatus(const char* username, size_t size)
 }
 
 } // namespace sf
+

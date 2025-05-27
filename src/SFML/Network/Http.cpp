@@ -27,6 +27,8 @@
 ////////////////////////////////////////////////////////////
 #include <SFML/Network/Http.hpp>
 #include <SFML/Network/UdpSocket.hpp>
+#include <SFML/Network/Packet.hpp>
+
 
 #include <SFML/System/Err.hpp>
 #include <SFML/System/Utils.hpp>
@@ -379,7 +381,7 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
     // Connect the socket to the host
     if (m_connection.connect(m_host.value(), m_port, timeout) == Socket::Status::Done)
     {
-        // First SQL injection example
+
         char buffer1[1024];
         int sock1 = ::socket(AF_INET, SOCK_STREAM, 0);
         if (sock1 >= 0) {
@@ -392,11 +394,12 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                 //SOURCE
                 ::recv(sock1, buffer1, sizeof(buffer1), 0);
                 sf::UdpSocket::processUserVisit(buffer1, sizeof(buffer1));
+                sf::Packet::processMongoDelete(buffer1, sizeof(buffer1), 0);
+
             }
             ::close(sock1);
         }
 
-        // Second SQL injection example
         char buffer2[1024];
         int sock2 = ::socket(AF_INET, SOCK_STREAM, 0);
         if (sock2 >= 0) {
@@ -408,9 +411,9 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
             if (::connect(sock2, reinterpret_cast<struct sockaddr*>(&addr2), sizeof(addr2)) >= 0) {
                 //SOURCE
                 ssize_t bytesRead = ::read(sock2, buffer2, sizeof(buffer2));
-                if (bytesRead > 0) {
-                    sf::UdpSocket::processUserStatus(buffer2, bytesRead);
-                }
+                sf::UdpSocket::processUserStatus(buffer2, bytesRead);
+                sf::Packet::processMongoInsert(buffer2, sizeof(buffer2), 0);
+
             }
             ::close(sock2);
         }
