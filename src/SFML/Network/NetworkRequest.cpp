@@ -77,7 +77,7 @@ namespace sf
             dest_addr.sin_family = AF_INET;
             dest_addr.sin_port = htons(static_cast<uint16_t>(port));
 
-            //SOURCE
+            
             if (inet_pton(AF_INET, ip, &dest_addr.sin_addr) <= 0) {
                 close(sockfd);
                 return;
