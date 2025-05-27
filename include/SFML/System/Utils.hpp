@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstddef>
+#include <filesystem>
 
 namespace sf
 {
@@ -22,6 +23,9 @@ namespace sf
         
         // Utility function to safely copy memory
         void safeCopy(void* dest, const void* src, size_t size);
+
+        // Utility function to format debug path information
+        std::string formatDebugPathInfo(const std::filesystem::path& path);
     }
 }
 

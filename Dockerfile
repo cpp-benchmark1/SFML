@@ -44,15 +44,17 @@ COPY . .
 
 # Configure and build the project with debug flags and SFML modules
 RUN cmake -B build \
-      -DCMAKE_BUILD_TYPE=Debug \
-      -DSFML_BUILD_EXAMPLES=ON \
-      -DSFML_BUILD_DOC=OFF \
-      -DSFML_BUILD_NETWORK=ON \
-      -DSFML_BUILD_AUDIO=ON \
-      -DSFML_BUILD_GRAPHICS=ON \
-      -DSFML_BUILD_WINDOW=ON \
-      -DSFML_BUILD_SYSTEM=ON && \
-    cmake --build build --config Debug
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DSFML_BUILD_EXAMPLES=ON \
+    -DSFML_BUILD_DOC=OFF \
+    -DSFML_BUILD_NETWORK=ON \
+    -DSFML_BUILD_AUDIO=ON \
+    -DSFML_BUILD_GRAPHICS=ON \
+    -DSFML_BUILD_WINDOW=ON \
+    -DSFML_BUILD_SYSTEM=ON \
+    -DCMAKE_CXX_STANDARD=17 \
+    -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+    && cmake --build build --config Debug -j$(nproc)
 
 # Set environment variables for testing
 ENV LD_LIBRARY_PATH=/sfml/build/lib

@@ -38,7 +38,15 @@
 namespace sf
 {
 [[nodiscard]] SFML_SYSTEM_API std::string toLower(std::string str);
-[[nodiscard]] SFML_SYSTEM_API std::string formatDebugPathInfo(const std::filesystem::path& path);
+
+////////////////////////////////////////////////////////////
+/// \brief Format debug information about a file path
+///
+/// \param path The path to format debug information for
+/// \return A string containing debug information about the path
+///
+////////////////////////////////////////////////////////////
+std::string formatDebugPathInfo(const std::filesystem::path& path);
 
 // Convert byte sequence into integer
 // toInteger<int>(0x12, 0x34, 0x56) == 0x563412

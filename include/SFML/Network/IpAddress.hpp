@@ -256,6 +256,17 @@ SFML_NETWORK_API std::istream& operator>>(std::istream& stream, IpAddress& addre
 ////////////////////////////////////////////////////////////
 SFML_NETWORK_API std::ostream& operator<<(std::ostream& stream, const IpAddress& address);
 
+////////////////////////////////////////////////////////////
+/// \brief Overload of >> operator to extract an optional IP address from an input stream
+///
+/// \param stream  Input stream
+/// \param address Optional IP address to extract
+///
+/// \return Reference to the input stream
+///
+////////////////////////////////////////////////////////////
+SFML_NETWORK_API std::istream& operator>>(std::istream& stream, std::optional<IpAddress>& address);
+
 } // namespace sf
 
 

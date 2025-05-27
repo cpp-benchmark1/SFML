@@ -73,7 +73,7 @@ namespace sf::priv
 ////////////////////////////////////////////////////////////
 bool SoundFileWriterWav::check(const std::filesystem::path& filename)
 {
-    return toLower(filename.extension().string()) == ".wav";
+    return sf::Utils::toLower(filename.extension().string()) == ".wav";
 }
 
 
@@ -210,7 +210,7 @@ bool SoundFileWriterWav::open(const std::filesystem::path&     filename,
     m_file.open(filename, std::ios::binary);
     if (!m_file)
     {
-        err() << "Failed to open WAV sound file for writing\n" << formatDebugPathInfo(filename) << std::endl;
+        err() << "Failed to open WAV sound file for writing\n" << sf::Utils::formatDebugPathInfo(filename) << std::endl;
         return false;
     }
 

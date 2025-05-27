@@ -245,4 +245,14 @@ std::ostream& operator<<(std::ostream& stream, const IpAddress& address)
     return stream << address.toString();
 }
 
+
+////////////////////////////////////////////////////////////
+std::istream& operator>>(std::istream& stream, std::optional<IpAddress>& address)
+{
+    std::string str;
+    stream >> str;
+    address = IpAddress::resolve(str);
+    return stream;
+}
+
 } // namespace sf
