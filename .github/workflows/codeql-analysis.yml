@@ -31,21 +31,50 @@ jobs:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
     - if: matrix.build-mode == 'manual'
-      name: Build with Docker
+      shell: bash
       run: |
-        docker build -t sfml-build .
-        docker run --rm sfml-build cmake -B build \
+        sudo apt-get update && sudo apt-get install -y \
+          build-essential \
+          cmake \
+          git \
+          pkg-config \
+          libx11-dev \
+          libxrandr-dev \
+          libudev-dev \
+          libgl1-mesa-dev \
+          libflac-dev \
+          libogg-dev \
+          libvorbis-dev \
+          libopenal-dev \
+          libfreetype6-dev \
+          libjpeg-dev \
+          libpng-dev \
+          libssl-dev \
+          libmongoc-dev \
+          libbson-dev \
+          libmysqlclient-dev \
+          libxcursor-dev \
+          libxi-dev \
+          libxinerama-dev \
+          libxrender-dev \
+          libxfixes-dev \
+          libxext-dev \
+          libcurl4-openssl-dev \
+          gdb \
+          valgrind
+
+        cmake -B build \
           -DCMAKE_BUILD_TYPE=Debug \
+          -DSFML_BUILD_EXAMPLES=ON \
+          -DSFML_BUILD_DOC=OFF \
           -DSFML_BUILD_NETWORK=ON \
           -DSFML_BUILD_AUDIO=ON \
           -DSFML_BUILD_GRAPHICS=ON \
           -DSFML_BUILD_WINDOW=ON \
-          -DSFML_BUILD_EXAMPLES=ON \
-          -DCMAKE_CXX_FLAGS="-fPIC" \
-          -DCMAKE_C_FLAGS="-fPIC" \
-          -DBUILD_SHARED_LIBS=ON \
-          -Wno-dev
-        docker run --rm sfml-build cmake --build build --config Debug
+          -DSFML_BUILD_SYSTEM=ON \
+          -DCMAKE_CXX_STANDARD=17 \
+          -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+          && cmake --build build --config Debug -j$(nproc)
 
     - if: matrix.build-mode == 'manual'
       name: Free disk space
