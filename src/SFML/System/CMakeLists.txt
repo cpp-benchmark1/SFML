@@ -36,6 +36,11 @@ set(SRC
     ${SRCROOT}/MemoryInputStream.cpp
     ${INCROOT}/MemoryInputStream.hpp
     ${INCROOT}/SuspendAwareClock.hpp
+    ${SRCROOT}/Lock.cpp
+    ${SRCROOT}/Mutex.cpp
+    ${SRCROOT}/NonCopyable.cpp
+    ${SRCROOT}/Thread.cpp
+    ${SRCROOT}/ThreadLocal.cpp
 )
 source_group("" FILES ${SRC})
 
@@ -93,3 +98,18 @@ elseif(SFML_OS_WINDOWS)
 elseif(SFML_OS_ANDROID)
     target_link_libraries(sfml-system PRIVATE android log)
 endif()
+
+if(SFML_BUILD_DOC)
+    set_target_properties(sfml-system PROPERTIES
+        FOLDER "SFML"
+    )
+endif()
+
+install(TARGETS sfml-system
+    EXPORT SFMLTargets
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib${LIB_SUFFIX}
+    ARCHIVE DESTINATION lib${LIB_SUFFIX}
+    FRAMEWORK DESTINATION ${CMAKE_INSTALL_FRAMEWORK_PREFIX}
+    COMPONENT bin
+)
