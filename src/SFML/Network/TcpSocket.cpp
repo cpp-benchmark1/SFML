@@ -80,7 +80,7 @@ unsigned short TcpSocket::getLocalPort() const
     {
         // Retrieve information about the local end of the socket
         sockaddr_in                  address{};
-        priv::SocketImpl::AddrLength size = sizeof(address);
+        socklen_t size = sizeof(address);
         if (getsockname(getNativeHandle(), reinterpret_cast<sockaddr*>(&address), &size) != -1)
         {
             return ntohs(address.sin_port);
@@ -99,7 +99,7 @@ std::optional<IpAddress> TcpSocket::getRemoteAddress() const
     {
         // Retrieve information about the remote end of the socket
         sockaddr_in                  address{};
-        priv::SocketImpl::AddrLength size = sizeof(address);
+        socklen_t size = sizeof(address);
         if (getpeername(getNativeHandle(), reinterpret_cast<sockaddr*>(&address), &size) != -1)
         {
             return IpAddress(ntohl(address.sin_addr.s_addr));
@@ -118,7 +118,7 @@ unsigned short TcpSocket::getRemotePort() const
     {
         // Retrieve information about the remote end of the socket
         sockaddr_in                  address{};
-        priv::SocketImpl::AddrLength size = sizeof(address);
+        socklen_t size = sizeof(address);
         if (getpeername(getNativeHandle(), reinterpret_cast<sockaddr*>(&address), &size) != -1)
         {
             return ntohs(address.sin_port);

@@ -22,7 +22,8 @@
 //
 ////////////////////////////////////////////////////////////
 
-#pragma once
+#ifndef SFML_SOCKETIMPL_HPP
+#define SFML_SOCKETIMPL_HPP
 
 ////////////////////////////////////////////////////////////
 // Headers
@@ -63,11 +64,9 @@ public:
     // Types
     ////////////////////////////////////////////////////////////
 #if defined(SFML_SYSTEM_WINDOWS)
-    using AddrLength = int;
-    using Size       = int;
+    using Size = int;
 #else
-    using AddrLength = socklen_t;
-    using Size       = std::size_t;
+    using Size = std::size_t;
 #endif
 
     ////////////////////////////////////////////////////////////
@@ -116,3 +115,5 @@ public:
 };
 
 } // namespace sf::priv
+
+#endif // SFML_SOCKETIMPL_HPP

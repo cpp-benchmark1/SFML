@@ -64,7 +64,7 @@ unsigned short UdpSocket::getLocalPort() const
     {
         // Retrieve information about the local end of the socket
         sockaddr_in                  address{};
-        priv::SocketImpl::AddrLength size = sizeof(address);
+        socklen_t size = sizeof(address);
         if (getsockname(getNativeHandle(), reinterpret_cast<sockaddr*>(&address), &size) != -1)
         {
             return ntohs(address.sin_port);
@@ -171,8 +171,8 @@ Socket::Status UdpSocket::receive(void*                     data,
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuseless-cast"
     // Receive a chunk of bytes
-    priv::SocketImpl::AddrLength addressSize  = sizeof(address);
-    const int                    sizeReceived = static_cast<int>(
+    socklen_t addressSize = sizeof(address);
+    const int sizeReceived = static_cast<int>(
         recvfrom(getNativeHandle(),
                  static_cast<char*>(data),
                  static_cast<priv::SocketImpl::Size>(size),
