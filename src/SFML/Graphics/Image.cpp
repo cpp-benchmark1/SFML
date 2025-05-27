@@ -26,7 +26,7 @@
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/Graphics/Image.hpp>
-
+#include <SFML/Graphics/Color.hpp>
 #include <SFML/System/Err.hpp>
 #include <SFML/System/Exception.hpp>
 #include <SFML/System/InputStream.hpp>
@@ -37,20 +37,21 @@
 #endif
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STBI_MSC_SECURE_CRT
+#include <stb_image.h>
 #include <stb_image_write.h>
 
 #include <algorithm>
+#include <cassert>
+#include <filesystem>
 #include <iomanip>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <utility>
 
-#include <cassert>
 #include <cstring>
-
 
 namespace
 {
@@ -92,8 +93,21 @@ struct StbDeleter
     }
 };
 using StbPtr = std::unique_ptr<stbi_uc, StbDeleter>;
-} // namespace
 
+// Format debug information about a file path
+std::string formatDebugPathInfo(const std::filesystem::path& path)
+{
+    std::string result = "Path: " + path.string() + "\n";
+    result += "Absolute path: " + std::filesystem::absolute(path).string() + "\n";
+    result += "Exists: " + std::string(std::filesystem::exists(path) ? "Yes" : "No") + "\n";
+    if (std::filesystem::exists(path))
+    {
+        result += "Size: " + std::to_string(std::filesystem::file_size(path)) + " bytes\n";
+        result += "Is regular file: " + std::string(std::filesystem::is_regular_file(path) ? "Yes" : "No") + "\n";
+    }
+    return result;
+}
+} // namespace
 
 namespace sf
 {
@@ -365,8 +379,8 @@ std::optional<std::vector<std::uint8_t>> Image::saveToMemory(std::string_view fo
     // Make sure the image is not empty
     if (!m_pixels.empty() && m_size.x > 0 && m_size.y > 0)
     {
-        // Choose function based on format
-        const std::string specified     = toLower(std::string(format));
+        // Convert the format string to lowercase
+        const std::string specified = sf::Utils::toLower(std::string(format));
         const Vector2i    convertedSize = Vector2i(m_size);
 
         std::vector<std::uint8_t> buffer;
