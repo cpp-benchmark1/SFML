@@ -5,6 +5,8 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 namespace sf
 {
@@ -70,6 +72,22 @@ namespace priv
             default:
                 return Socket::Status::Error;
         }
+    }
+
+    SocketHandle SocketImpl::invalidSocket()
+    {
+        return -1;
+    }
+
+    sockaddr_in SocketImpl::createAddress(std::uint32_t address, unsigned short port)
+    {
+        sockaddr_in addr;
+        std::memset(&addr, 0, sizeof(addr));
+        addr.sin_addr.s_addr = htonl(address);
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(port);
+
+        return addr;
     }
 
 } // namespace priv

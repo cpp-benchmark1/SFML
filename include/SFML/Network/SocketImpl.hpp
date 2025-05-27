@@ -51,6 +51,25 @@ namespace priv
         ///
         ////////////////////////////////////////////////////////////
         static Socket::Status getErrorStatus();
+
+        ////////////////////////////////////////////////////////////
+        /// \brief Get the invalid socket handle
+        ///
+        /// \return Invalid socket handle
+        ///
+        ////////////////////////////////////////////////////////////
+        static SocketHandle invalidSocket();
+
+        ////////////////////////////////////////////////////////////
+        /// \brief Create an address structure
+        ///
+        /// \param address IP address
+        /// \param port    Port number
+        ///
+        /// \return Address structure
+        ///
+        ////////////////////////////////////////////////////////////
+        static sockaddr_in createAddress(std::uint32_t address, unsigned short port);
     };
 
 } // namespace priv
