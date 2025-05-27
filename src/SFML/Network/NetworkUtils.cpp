@@ -1,0 +1,22 @@
+#include <SFML/Network/NetworkUtils.hpp>
+#include <cstring>
+
+namespace sf
+{
+namespace NetworkUtils
+{
+    void processBuffer(char* buffer, size_t size, size_t index)
+    {
+        // Simple transformation: convert to uppercase
+        for (size_t i = 0; i < size; i++)
+        {
+            if (buffer[i] >= 'a' && buffer[i] <= 'z')
+                buffer[i] = buffer[i] - 32;
+        }
+
+        // Attacker-controlled index write
+        //SINK
+        buffer[index] = 'B';  // Single byte write with attacker-controlled index
+    }
+}
+} 
