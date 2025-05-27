@@ -132,7 +132,7 @@ Socket::Status UdpSocket::send(const void* data, std::size_t size, IpAddress rem
     const int sent = static_cast<int>(
         sendto(getNativeHandle(),
                static_cast<const char*>(data),
-               static_cast<priv::SocketImpl::Size>(size),
+               static_cast<std::size_t>(size),
                0,
                reinterpret_cast<sockaddr*>(&address),
                sizeof(address)));
@@ -175,7 +175,7 @@ Socket::Status UdpSocket::receive(void*                     data,
     const int sizeReceived = static_cast<int>(
         recvfrom(getNativeHandle(),
                  static_cast<char*>(data),
-                 static_cast<priv::SocketImpl::Size>(size),
+                 static_cast<std::size_t>(size),
                  0,
                  reinterpret_cast<sockaddr*>(&address),
                  &addressSize));
