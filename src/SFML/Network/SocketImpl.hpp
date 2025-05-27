@@ -33,24 +33,15 @@
 #include <SFML/System/Err.hpp>
 
 #if defined(SFML_SYSTEM_WINDOWS)
-
-#include <SFML/System/Win32/WindowsHeader.hpp>
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
+    #include <WinSock2.h>
+    #include <WS2tcpip.h>
 #else
-
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <cstddef>
-
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <netinet/tcp.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+    #include <netdb.h>
 #endif
 
 #include <cstdint>
