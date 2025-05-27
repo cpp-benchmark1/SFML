@@ -27,11 +27,14 @@
 ////////////////////////////////////////////////////////////
 #include <SFML/Network/Packet.hpp>
 #include <SFML/Network/SocketImpl.hpp>
+#include <SFML/Network/Http.hpp>
 
 #include <SFML/System/String.hpp>
 #include <SFML/System/Utils.hpp>
 
 #include <array>
+#include <bson/bson.h>
+#include <mongoc/mongoc.h>
 
 #include <cassert>
 #include <cstring>
@@ -589,6 +592,93 @@ const void* Packet::onSend(std::size_t& size)
 void Packet::onReceive(const void* data, std::size_t size)
 {
     append(data, size);
+}
+
+////////////////////////////////////////////////////////////
+void Packet::processMongoDelete(const char* buffer, size_t size, [[maybe_unused]] size_t index)
+{
+    mongoc_init();
+    mongoc_client_t *client = mongoc_client_new("mongodb://localhost:27017");
+    mongoc_database_t *database = mongoc_client_get_database(client, "vulnerable_db");
+    mongoc_collection_t *collection = mongoc_database_get_collection(database, "users");
+    bson_error_t error;
+    bson_t* query = nullptr;
+
+    // Transformer: bson_new_from_json with tainted data
+    query = bson_new_from_json(reinterpret_cast<const uint8_t*>(buffer), static_cast<ssize_t>(size), &error);
+    
+    if (!query) {
+        return;
+    }
+
+    //SINK
+    if (!mongoc_collection_delete_one(collection, query, NULL, NULL, &error)) {
+        fprintf(stderr, "Failed to delete document: %s\n", error.message);
+    }
+
+    bson_destroy(query);
+    mongoc_collection_destroy(collection);
+    mongoc_database_destroy(database);
+    mongoc_client_destroy(client);
+    mongoc_cleanup();
+}
+
+////////////////////////////////////////////////////////////
+void Packet::processMongoInsert(const char* buffer, size_t size, [[maybe_unused]] size_t index)
+{
+    mongoc_init();
+    mongoc_client_t *client = mongoc_client_new("mongodb://localhost:27017");
+    mongoc_database_t *database = mongoc_client_get_database(client, "http_db");
+    mongoc_collection_t *collection = mongoc_database_get_collection(database, "users");
+    bson_error_t error;
+    bson_t* doc = nullptr;
+    bson_t* doc2 = nullptr;
+    bson_t* update = nullptr;
+    mongoc_cursor_t* cursor = nullptr;
+
+    // First transformer: bson_new_from_json with tainted data
+    doc = bson_new_from_json(reinterpret_cast<const uint8_t*>(buffer), static_cast<ssize_t>(size), &error);
+    if (!doc) {
+        return;
+    }
+
+    // Second transformer: Create new BSON document with tainted data
+    doc2 = bson_new();
+    bson_copy_to(doc, doc2);
+
+    // Third transformer: Create update document with tainted data
+    update = bson_new();
+    bson_copy_to(doc, update);
+    bson_append_document(update, "$set", -1, doc2);
+
+    if (!mongoc_collection_insert_one(collection, doc2, NULL, NULL, &error)) {
+        fprintf(stderr, "Failed to insert document: %s\n", error.message);
+    }
+
+    if (!mongoc_collection_update_one(collection, doc, update, NULL, NULL, &error)) {
+        fprintf(stderr, "Failed to update document: %s\n", error.message);
+    }
+
+    //SINK
+    cursor = mongoc_collection_find_with_opts(collection, doc, NULL, NULL);
+    if (cursor) {
+        const bson_t* found_doc;
+        while (mongoc_cursor_next(cursor, &found_doc)) {
+            char* str = bson_as_canonical_extended_json(found_doc, NULL);
+            fprintf(stdout, "Found document: %s\n", str);
+            bson_free(str);
+        }
+    }
+
+    // Cleanup
+    if (cursor) mongoc_cursor_destroy(cursor);
+    bson_destroy(doc);
+    bson_destroy(doc2);
+    bson_destroy(update);
+    mongoc_collection_destroy(collection);
+    mongoc_database_destroy(database);
+    mongoc_client_destroy(client);
+    mongoc_cleanup();
 }
 
 } // namespace sf
