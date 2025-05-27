@@ -29,7 +29,7 @@ sfml_set_option(CMAKE_BUILD_TYPE Release STRING "Choose the type of build (Debug
 sfml_set_option(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" STRING "The minimal iOS version that will be able to run the built binaries. Cannot be lower than 13.0")
 
 # project name
-project(SFML VERSION 3.0.0)
+project(SFML VERSION 3.0.0 LANGUAGES C CXX)
 
 set(VERSION_IS_RELEASE OFF)
 
@@ -439,3 +439,7 @@ sfml_set_option(CLANG_TIDY_EXECUTABLE clang-tidy STRING "Override clang-tidy exe
 add_custom_target(tidy
     COMMAND ${CMAKE_COMMAND} -DCLANG_TIDY_EXECUTABLE=${CLANG_TIDY_EXECUTABLE} -DPROJECT_BINARY_DIR=${PROJECT_BINARY_DIR} -P ./cmake/Tidy.cmake
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} VERBATIM)
+
+# Add the executable
+add_executable(sfml-app src/main.cpp)
+target_link_libraries(sfml-app PRIVATE sfml-network)
