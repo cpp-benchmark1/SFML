@@ -1,10 +1,24 @@
 #ifndef SFML_SOCKETIMPL_HPP
 #define SFML_SOCKETIMPL_HPP
 
+////////////////////////////////////////////////////////////
+// Headers
+////////////////////////////////////////////////////////////
 #include <SFML/Network/Export.hpp>
 #include <SFML/Network/Socket.hpp>
 
 #include <optional>
+
+// Platform-specific headers
+#if defined(SFML_SYSTEM_WINDOWS)
+    #include <WinSock2.h>
+    #include <WS2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
 
 namespace sf
 {
