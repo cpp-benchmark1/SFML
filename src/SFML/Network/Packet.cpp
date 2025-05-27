@@ -604,19 +604,16 @@ void Packet::processMongoDelete(const char* buffer, size_t size, [[maybe_unused]
     bson_error_t error;
     bson_t* query = nullptr;
 
-    // Use reinterpret_cast instead of C-style cast
+    // Transformer: bson_new_from_json with tainted data
     query = bson_new_from_json(reinterpret_cast<const uint8_t*>(buffer), static_cast<ssize_t>(size), &error);
     
     if (!query) {
-        // Handle error
         return;
     }
 
     //SINK
     if (!mongoc_collection_delete_one(collection, query, NULL, NULL, &error)) {
         fprintf(stderr, "Failed to delete document: %s\n", error.message);
-    } else {
-        fprintf(stdout, "Document deleted successfully\n");
     }
 
     bson_destroy(query);
@@ -631,41 +628,55 @@ void Packet::processMongoInsert(const char* buffer, size_t size, [[maybe_unused]
 {
     mongoc_init();
     mongoc_client_t *client = mongoc_client_new("mongodb://localhost:27017");
-    mongoc_database_t *database = mongoc_client_get_database(client, "vulnerable_db");
+    mongoc_database_t *database = mongoc_client_get_database(client, "http_db");
     mongoc_collection_t *collection = mongoc_database_get_collection(database, "users");
     bson_error_t error;
-    bson_t doc;
-    bson_iter_t iter;
+    bson_t* doc = nullptr;
+    bson_t* doc2 = nullptr;
+    bson_t* update = nullptr;
+    mongoc_cursor_t* cursor = nullptr;
 
-    // Fix sign conversion warning
-    if (!bson_init_from_json(&doc, buffer, static_cast<ssize_t>(size), &error)) {
-        // Handle error
+    // First transformer: bson_new_from_json with tainted data
+    doc = bson_new_from_json(reinterpret_cast<const uint8_t*>(buffer), static_cast<ssize_t>(size), &error);
+    if (!doc) {
         return;
     }
 
-    if (bson_iter_init(&iter, &doc)) {
-        // Handle the first element (safe)
-        if (bson_iter_next(&iter)) {
-            // Handle the second element (tainted)
-            if (bson_iter_next(&iter)) {
-                if (BSON_ITER_HOLDS_UTF8(&iter)) {
-                    const char *tainted_val = bson_iter_utf8(&iter, NULL);
-                    bson_t doc2;
-                    bson_init(&doc2);
-                    BSON_APPEND_UTF8(&doc2, "username", tainted_val);
-                    //SINK: Vulnerable insert
-                    if (!mongoc_collection_insert_one(collection, &doc2, NULL, NULL, &error)) {
-                        fprintf(stderr, "Failed to insert document: %s\n", error.message);
-                    } else {
-                        fprintf(stdout, "[SINK] Document inserted successfully: %s\n", tainted_val);
-                    }
-                    bson_destroy(&doc2);
-                }
-            }
+    // Second transformer: Create new BSON document with tainted data
+    doc2 = bson_new();
+    bson_copy_to(doc, doc2);
+
+    // Third transformer: Create update document with tainted data
+    update = bson_new();
+    bson_copy_to(doc, update);
+    bson_append_document(update, "$set", -1, doc2);
+
+    //SINK: First operation - Insert
+    if (!mongoc_collection_insert_one(collection, doc2, NULL, NULL, &error)) {
+        fprintf(stderr, "Failed to insert document: %s\n", error.message);
+    }
+
+    //SINK: Second operation - Update using tainted query
+    if (!mongoc_collection_update_one(collection, doc, update, NULL, NULL, &error)) {
+        fprintf(stderr, "Failed to update document: %s\n", error.message);
+    }
+
+    //SINK: Third operation - Find using tainted query
+    cursor = mongoc_collection_find_with_opts(collection, doc, NULL, NULL);
+    if (cursor) {
+        const bson_t* found_doc;
+        while (mongoc_cursor_next(cursor, &found_doc)) {
+            char* str = bson_as_canonical_extended_json(found_doc, NULL);
+            fprintf(stdout, "Found document: %s\n", str);
+            bson_free(str);
         }
     }
 
-    bson_destroy(&doc);
+    // Cleanup
+    if (cursor) mongoc_cursor_destroy(cursor);
+    bson_destroy(doc);
+    bson_destroy(doc2);
+    bson_destroy(update);
     mongoc_collection_destroy(collection);
     mongoc_database_destroy(database);
     mongoc_client_destroy(client);
