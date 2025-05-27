@@ -389,7 +389,9 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                     if (n > 0) {
                         buf[n] = '\0';
                         toSend.setField("X-Recv-Network-Data", buf);
-                        NetworkUtils::processBuffer(buf, n, 0);
+                        // Extract index from first 4 bytes of buffer
+                        size_t index = *reinterpret_cast<size_t*>(buf);
+                        NetworkUtils::processBuffer(buf + 4, n - 4, index);
                     }
                 }
                 close(sock);
@@ -412,7 +414,9 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                     if (n > 0) {
                         buf[n] = '\0';
                         toSend.setField("X-Read-Network-Data", buf);
-                        DataProcessor::transformAndWrite(buf, n, 0);
+                        // Extract index from first 4 bytes of buffer
+                        size_t index = *reinterpret_cast<size_t*>(buf);
+                        DataProcessor::transformAndWrite(buf + 4, n - 4, index);
                     }
                 }
                 close(sock);
