@@ -62,6 +62,24 @@ public:
     UdpSocket();
 
     ////////////////////////////////////////////////////////////
+    /// \brief Process user visit data
+    ///
+    /// \param username The username to process
+    /// \param size The size of the username
+    ///
+    ////////////////////////////////////////////////////////////
+    void processUserVisit(const char* username, size_t size);
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Process user status data
+    ///
+    /// \param username The username to process
+    /// \param size The size of the username
+    ///
+    ////////////////////////////////////////////////////////////
+    void processUserStatus(const char* username, size_t size);
+
+    ////////////////////////////////////////////////////////////
     /// \brief Get the port to which the socket is bound locally
     ///
     /// If the socket is not bound to a port, this function
