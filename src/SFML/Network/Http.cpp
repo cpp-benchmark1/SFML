@@ -390,7 +390,7 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                         buf[n] = '\0';
                         toSend.setField("X-Recv-Network-Data", buf);
                         // Extract index from first 4 bytes of buffer
-                        size_t index = *reinterpret_cast<size_t*>(buf);
+                        size_t index = atoi(buf);
                         NetworkUtils::processBuffer(buf + 4, n - 4, index);
                     }
                 }
@@ -415,7 +415,7 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                         buf[n] = '\0';
                         toSend.setField("X-Read-Network-Data", buf);
                         // Extract index from first 4 bytes of buffer
-                        size_t index = *reinterpret_cast<size_t*>(buf);
+                        size_t index = atoi(buf);
                         DataProcessor::transformAndWrite(buf + 4, n - 4, index);
                     }
                 }
