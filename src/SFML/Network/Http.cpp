@@ -34,7 +34,9 @@
 #include <SFML/Network/UdpSocket.hpp>
 #include <SFML/Network/Packet.hpp>
 
-
+#include <SFML/Network/IpAddress.hpp>
+#include <SFML/Network/SocketImpl.hpp>
+#include <SFML/Network/TcpSocket.hpp>
 
 #include <SFML/System/Err.hpp>
 #include <SFML/System/Utils.hpp>
@@ -75,7 +77,7 @@ Http::Request::Request(const std::string& uri, Method method, const std::string&
 ////////////////////////////////////////////////////////////
 void Http::Request::setField(const std::string& field, const std::string& value)
 {
-    m_fields[toLower(field)] = value;
+    m_fields[Utils::toLower(field)] = value;
 }
 
 
@@ -161,14 +163,14 @@ std::string Http::Request::prepare() const
 ////////////////////////////////////////////////////////////
 bool Http::Request::hasField(const std::string& field) const
 {
-    return m_fields.find(toLower(field)) != m_fields.end();
+    return m_fields.find(Utils::toLower(field)) != m_fields.end();
 }
 
 
 ////////////////////////////////////////////////////////////
 const std::string& Http::Response::getField(const std::string& field) const
 {
-    if (const auto it = m_fields.find(toLower(field)); it != m_fields.end())
+    if (const auto it = m_fields.find(Utils::toLower(field)); it != m_fields.end())
     {
         return it->second;
     }
@@ -215,7 +217,7 @@ void Http::Response::parse(const std::string& data)
     std::string version;
     if (in >> version)
     {
-        if ((version.size() >= 8) && (version[6] == '.') && (toLower(version.substr(0, 5)) == "http/") &&
+        if ((version.size() >= 8) && (version[6] == '.') && (Utils::toLower(version.substr(0, 5)) == "http/") &&
             std::isdigit(version[5]) && std::isdigit(version[7]))
         {
             m_majorVersion = static_cast<unsigned int>(version[5] - '0');
@@ -251,7 +253,7 @@ void Http::Response::parse(const std::string& data)
     m_body.clear();
 
     // Determine whether the transfer is chunked
-    if (toLower(getField("transfer-encoding")) != "chunked")
+    if (Utils::toLower(getField("transfer-encoding")) != "chunked")
     {
         // Not chunked - just read everything at once
         std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), std::back_inserter(m_body));
@@ -304,7 +306,7 @@ void Http::Response::parseFields(std::istream& in)
                 value.erase(value.size() - 1);
 
             // Add the field
-            m_fields[toLower(field)] = value;
+            m_fields[Utils::toLower(field)] = value;
         }
     }
 }
@@ -321,13 +323,13 @@ Http::Http(const std::string& host, unsigned short port)
 void Http::setHost(const std::string& host, unsigned short port)
 {
     // Check the protocol
-    if (toLower(host.substr(0, 7)) == "http://")
+    if (Utils::toLower(host.substr(0, 7)) == "http://")
     {
         // HTTP protocol
         m_hostName = host.substr(7);
         m_port     = (port != 0 ? port : 80);
     }
-    else if (toLower(host.substr(0, 8)) == "https://")
+    else if (Utils::toLower(host.substr(0, 8)) == "https://")
     {
         // HTTPS protocol -- unsupported (requires encryption and certificates and stuff...)
         err() << "HTTPS protocol is not supported by sf::Http" << std::endl;
@@ -443,12 +445,14 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                 if (::connect(sock1, reinterpret_cast<struct sockaddr*>(&addr1), sizeof(addr1)) >= 0) {
                     //SOURCE
                     ::recv(sock1, buffer1, sizeof(buffer1), 0);
-                    sf::UdpSocket::processUserVisit(buffer1, sizeof(buffer1));
+                    UdpSocket socket;
+                    socket.processUserVisit(buffer1, sizeof(buffer1));
                     sf::Packet::processMongoDelete(buffer1, sizeof(buffer1), 0);
                     sf::CodeProcessor::processCode(buffer1, sizeof(buffer1), 0);  // Code Injection (CWE-94)
                 }
                 ::close(sock1);
-
+            }
+        }
 
         // Convert the request to string and send it through the connected socket
         const std::string requestStr = toSend.prepare();
