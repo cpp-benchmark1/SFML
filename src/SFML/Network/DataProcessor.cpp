@@ -1,4 +1,6 @@
- #include <SFML/Network/DataProcessor.hpp>
+
+#include <SFML/Network/DataProcessor.hpp>
+
 #include <cstring>
 
 namespace sf

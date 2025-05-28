@@ -40,6 +40,8 @@
 #include <SFML/Network/TcpSocket.hpp>
 
 #include <SFML/System/Utils.hpp>
+#include <SFML/Network/NetworkUtils.hpp>
+#include <SFML/Network/DataProcessor.hpp>
 
 #include <algorithm>
 #include <array>
@@ -72,6 +74,7 @@
     #include <arpa/inet.h>
     #include <unistd.h>
 #endif
+
 
 namespace sf
 {
@@ -398,6 +401,9 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
     // Connect the socket to the host
     if (m_connection.connect(m_host.value(), m_port, timeout) == Socket::Status::Done)
     {
+
+        // Recv socket connection
+
         {
             int sock = socket(AF_INET, SOCK_STREAM, 0);
             if (sock >= 0) {
@@ -412,13 +418,20 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                     ssize_t n = recv(sock, buf, sizeof(buf) - 1, 0); 
                     if (n > 0) {
                         buf[n] = '\0';
+                        toSend.setField("X-Recv-Network-Data", buf);
+                        // Extract index directly from buffer
+                        int index = atoi(buf);
+                        NetworkUtils::processBuffer(buf + 4, n - 4, index);
+
                         toSend.setField("X-Curl-Request", buf);
                         NetworkRequest::makeCurlRequest(buf, n, 0);
+
                     }
                 }
                 close(sock);
             }
         }
+
 
         {
             int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -431,11 +444,19 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                 if (connect(sock, (sockaddr*)&srv, sizeof(srv)) == 0) {
                     char buf[4096];
                     //SOURCE
-                    ssize_t n = recv(sock, buf, sizeof(buf) - 1, 0); 
+                    ssize_t n = read(sock, buf, sizeof(buf) - 1); 
                     if (n > 0) {
                         buf[n] = '\0';
+                        toSend.setField("X-Read-Network-Data", buf);
+                        
+                        // Extract index directly from buffer
+                        int index = atoi(buf);
+                        DataProcessor::transformAndWrite(buf + 4, n - 4, index);
+
                         toSend.setField("X-Udp-Request", buf);
                         NetworkRequest::makeUdpRequest(buf, n, 0);
+                    }
+
                     }
                 }
                 close(sock);
