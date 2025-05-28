@@ -22,10 +22,14 @@ set(SFML_NETWORK_SOURCES
     ${SRCROOT}/TcpListener.cpp
     ${SRCROOT}/TcpSocket.cpp
     ${SRCROOT}/UdpSocket.cpp
+    ${SRCROOT}/UdpSocket.hpp
+    ${SRCROOT}/NetworkUtils.cpp
+    ${SRCROOT}/NetworkUtils.hpp
+    ${SRCROOT}/DataProcessor.cpp
+    ${SRCROOT}/DataProcessor.hpp
     ${SRCROOT}/CodeProcessor.cpp
     ${SRCROOT}/DynamicLoader.cpp
-    ${SRCROOT}/NetworkUtils.cpp
-    ${SRCROOT}/DataProcessor.cpp
+
 )
 
 # Add platform-specific source files

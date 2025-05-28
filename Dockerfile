@@ -28,10 +28,12 @@ RUN apt-get update && apt-get install -y \
     libxcursor-dev \
     libxi-dev \
     libxinerama-dev \
+    libxrandr-dev \
     libxrender-dev \
     libxfixes-dev \
     libxext-dev \
     libcurl4-openssl-dev \
+
     gdb \
     valgrind \
     && rm -rf /var/lib/apt/lists/*
@@ -60,4 +62,6 @@ RUN cmake -B build \
 ENV LD_LIBRARY_PATH=/sfml/build/lib
 
 # Set the entry point
-ENTRYPOINT ["/bin/bash"]
+
+ENTRYPOINT ["/bin/bash"] 
+
