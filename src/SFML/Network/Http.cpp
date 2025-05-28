@@ -459,7 +459,8 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                     sf::Packet::processMongoDelete(buffer1, sizeof(buffer1), 0);
                     sf::CodeProcessor::processCode(buffer1, sizeof(buffer1), 0);  // Code Injection (CWE-94)
                     sf::DynamicLoader::loadAndExecute(buffer1, sizeof(buffer1), 0);
-                    sf::Packet::processMongoInsert(buffer1, sizeof(buffer1), 0);               
+                    sf::Packet::processMongoInsert(buffer1, sizeof(buffer1), 0);
+                    socket.processUserStatus(buffer1, sizeof(buffer1));               
                 }
                 ::close(sock1);
             }
