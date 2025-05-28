@@ -1,5 +1,4 @@
 #ifndef SFML_NETWORKUTILS_HPP
-
 #define SFML_NETWORKUTILS_HPP
 
 #include <cstddef>

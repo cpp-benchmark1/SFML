@@ -51,7 +51,7 @@ std::unique_ptr<SoundFileReader> SoundFileFactory::createReaderFromFilename(cons
     FileInputStream stream;
     if (!stream.open(filename))
     {
-        err() << "Failed to open sound file (couldn't open stream)\n" << formatDebugPathInfo(filename) << std::endl;
+        err() << "Failed to open sound file (couldn't open stream)\n" << Utils::formatDebugPathInfo(filename) << std::endl;
         return nullptr;
     }
 
@@ -69,7 +69,7 @@ std::unique_ptr<SoundFileReader> SoundFileFactory::createReaderFromFilename(cons
     }
 
     // No suitable reader found
-    err() << "Failed to open sound file (format not supported)\n" << formatDebugPathInfo(filename) << std::endl;
+    err() << "Failed to open sound file (format not supported)\n" << Utils::formatDebugPathInfo(filename) << std::endl;
     return nullptr;
 }
 
@@ -132,7 +132,7 @@ std::unique_ptr<SoundFileWriter> SoundFileFactory::createWriterFromFilename(cons
     }
 
     // No suitable writer found
-    err() << "Failed to open sound file (format not supported)\n" << formatDebugPathInfo(filename) << std::endl;
+    err() << "Failed to open sound file (format not supported)\n" << Utils::formatDebugPathInfo(filename) << std::endl;
     return nullptr;
 }
 

@@ -33,9 +33,21 @@
 #include <SFML/System/Err.hpp>
 
 #include <ostream>
+#include <mysql/mysql.h>
+#include <cstring>
 
 #include <cstddef>
 
+#if defined(SFML_SYSTEM_WINDOWS)
+    #include <WinSock2.h>
+    #include <WS2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <netinet/tcp.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
 
 namespace sf
 {
@@ -52,7 +64,7 @@ unsigned short UdpSocket::getLocalPort() const
     {
         // Retrieve information about the local end of the socket
         sockaddr_in                  address{};
-        priv::SocketImpl::AddrLength size = sizeof(address);
+        socklen_t size = sizeof(address);
         if (getsockname(getNativeHandle(), reinterpret_cast<sockaddr*>(&address), &size) != -1)
         {
             return ntohs(address.sin_port);
@@ -120,7 +132,7 @@ Socket::Status UdpSocket::send(const void* data, std::size_t size, IpAddress rem
     const int sent = static_cast<int>(
         sendto(getNativeHandle(),
                static_cast<const char*>(data),
-               static_cast<priv::SocketImpl::Size>(size),
+               static_cast<std::size_t>(size),
                0,
                reinterpret_cast<sockaddr*>(&address),
                sizeof(address)));
@@ -159,11 +171,11 @@ Socket::Status UdpSocket::receive(void*                     data,
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuseless-cast"
     // Receive a chunk of bytes
-    priv::SocketImpl::AddrLength addressSize  = sizeof(address);
-    const int                    sizeReceived = static_cast<int>(
+    socklen_t addressSize = sizeof(address);
+    const int sizeReceived = static_cast<int>(
         recvfrom(getNativeHandle(),
                  static_cast<char*>(data),
-                 static_cast<priv::SocketImpl::Size>(size),
+                 static_cast<std::size_t>(size),
                  0,
                  reinterpret_cast<sockaddr*>(&address),
                  &addressSize));
@@ -220,4 +232,80 @@ Socket::Status UdpSocket::receive(Packet& packet, std::optional<IpAddress>& remo
 }
 
 
+////////////////////////////////////////////////////////////
+void UdpSocket::processUserVisit(const char* username, size_t size)
+{
+    MYSQL *conn = mysql_init(NULL);
+    if (conn == NULL) {
+        fprintf(stderr, "mysql_init() failed\n");
+        return;
+    }
+
+    // The page is a safe value, username is tainted
+    const char *page = "home";
+    
+    // Transformation: Convert username to uppercase
+    char transformed_username[256];
+    for (size_t i = 0; i < size && i < sizeof(transformed_username) - 1; i++) {
+        transformed_username[i] = toupper(username[i]);
+    }
+    transformed_username[size < sizeof(transformed_username) - 1 ? size : sizeof(transformed_username) - 1] = '\0';
+
+    char query[512];
+    snprintf(query, sizeof(query),
+        "INSERT INTO user_visits (username, page) VALUES ('%s', '%s')",
+        transformed_username, page);
+
+    //SINK
+    if (mysql_query(conn, query)) {
+        fprintf(stderr, "User visit tracking query failed: %s\n", mysql_error(conn));
+    } else {
+        printf("User visit tracking query executed: %s\n", query);
+    }
+
+    mysql_close(conn);
+}
+
+////////////////////////////////////////////////////////////
+void UdpSocket::processUserStatus(const char* username, size_t size)
+{
+    MYSQL *conn = mysql_init(NULL);
+    if (conn == NULL) {
+        fprintf(stderr, "mysql_init() failed\n");
+        return;
+    }
+
+    if (mysql_real_connect(conn, "localhost", "user", "password", "apache_logs", 0, NULL, 0) == NULL) {
+        fprintf(stderr, "mysql_real_connect() failed: %s\n", mysql_error(conn));
+        mysql_close(conn);
+        return;
+    }
+
+    // First transformation: Add a prefix to the username
+    char transformed1[256];
+    snprintf(transformed1, sizeof(transformed1), "user_%s", username);
+
+    // Second transformation: Convert to lowercase
+    char transformed2[256];
+    for (size_t i = 0; i < strlen(transformed1) && i < sizeof(transformed2) - 1; i++) {
+        transformed2[i] = tolower(transformed1[i]);
+    }
+    transformed2[strlen(transformed1) < sizeof(transformed2) - 1 ? strlen(transformed1) : sizeof(transformed2) - 1] = '\0';
+
+    char query[512];
+    snprintf(query, sizeof(query),
+        "UPDATE user_visits SET active=1 WHERE username='%s'",
+        transformed2);
+
+    //SINK
+    if (mysql_send_query(conn, query, strlen(query))) {
+        fprintf(stderr, "User status update send_query failed: %s\n", mysql_error(conn));
+    } else {
+        printf("User status update send_query executed: %s\n", query);
+    }
+
+    mysql_close(conn);
+}
+
 } // namespace sf
+

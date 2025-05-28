@@ -33,9 +33,10 @@
 #include <algorithm>
 #include <ostream>
 
-
-namespace sf::priv
+namespace sf
 {
+    namespace priv
+    {
 ////////////////////////////////////////////////////////////
 void SoundFileWriterFlac::FlacStreamEncoderDeleter::operator()(FLAC__StreamEncoder* encoder) const
 {
@@ -47,7 +48,7 @@ void SoundFileWriterFlac::FlacStreamEncoderDeleter::operator()(FLAC__StreamEncod
 ////////////////////////////////////////////////////////////
 bool SoundFileWriterFlac::check(const std::filesystem::path& filename)
 {
-    return toLower(filename.extension().string()) == ".flac";
+    return sf::Utils::toLower(filename.extension().string()) == ".flac";
 }
 
 
@@ -133,7 +134,7 @@ bool SoundFileWriterFlac::open(const std::filesystem::path&     filename,
     if (!m_encoder)
     {
         err() << "Failed to write flac file (failed to allocate encoder)\n"
-              << formatDebugPathInfo(filename) << std::endl;
+              << sf::Utils::formatDebugPathInfo(filename) << std::endl;
         return false;
     }
 
@@ -146,7 +147,8 @@ bool SoundFileWriterFlac::open(const std::filesystem::path&     filename,
     if (FLAC__stream_encoder_init_file(m_encoder.get(), filename.string().c_str(), nullptr, nullptr) !=
         FLAC__STREAM_ENCODER_INIT_STATUS_OK)
     {
-        err() << "Failed to write flac file (failed to open the file)\n" << formatDebugPathInfo(filename) << std::endl;
+        err() << "Failed to write flac file (failed to open the file)\n" 
+              << sf::Utils::formatDebugPathInfo(filename) << std::endl;
         m_encoder.reset();
         return false;
     }
@@ -185,4 +187,5 @@ void SoundFileWriterFlac::write(const std::int16_t* samples, std::uint64_t count
     }
 }
 
-} // namespace sf::priv
+    } // namespace priv
+} // namespace sf

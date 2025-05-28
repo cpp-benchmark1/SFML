@@ -168,6 +168,20 @@ std::vector<float> flatten(const sf::Glsl::Vec4* vectorArray, std::size_t length
 
     return contiguous;
 }
+
+// Format debug information about a file path
+std::string formatDebugPathInfo(const std::filesystem::path& path)
+{
+    std::string result = "Path: " + path.string() + "\n";
+    result += "Absolute path: " + std::filesystem::absolute(path).string() + "\n";
+    result += "Exists: " + std::string(std::filesystem::exists(path) ? "Yes" : "No") + "\n";
+    if (std::filesystem::exists(path))
+    {
+        result += "Size: " + std::to_string(std::filesystem::file_size(path)) + " bytes\n";
+        result += "Is regular file: " + std::string(std::filesystem::is_regular_file(path) ? "Yes" : "No") + "\n";
+    }
+    return result;
+}
 } // namespace
 
 

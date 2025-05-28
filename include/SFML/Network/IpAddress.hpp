@@ -49,29 +49,20 @@ class SFML_NETWORK_API IpAddress
 {
 public:
     ////////////////////////////////////////////////////////////
-    /// \brief Construct the address from a null-terminated string view
+    /// \brief Default constructor
+    ///
+    /// This constructor creates an empty (invalid) address
+    ///
+    ////////////////////////////////////////////////////////////
+    IpAddress();
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Construct the address from a string
     ///
     /// Here \a address can be either a decimal address
     /// (ex: "192.168.1.56") or a network name (ex: "localhost").
     ///
     /// \param address IP address or network name
-    ///
-    /// \return Address if provided argument was valid, otherwise `std::nullopt`
-    ///
-    ////////////////////////////////////////////////////////////
-    [[nodiscard]] static std::optional<IpAddress> resolve(std::string_view address);
-
-    ////////////////////////////////////////////////////////////
-    /// \brief Construct the address from 4 bytes
-    ///
-    /// Calling `IpAddress(a, b, c, d)` is equivalent to calling
-    /// `IpAddress::resolve("a.b.c.d")`, but safer as it doesn't
-    /// have to parse a string to get the address components.
-    ///
-    /// \param byte0 First byte of the address
-    /// \param byte1 Second byte of the address
-    /// \param byte2 Third byte of the address
-    /// \param byte3 Fourth byte of the address
     ///
     ////////////////////////////////////////////////////////////
     IpAddress(std::uint8_t byte0, std::uint8_t byte1, std::uint8_t byte2, std::uint8_t byte3);
@@ -79,14 +70,7 @@ public:
     ////////////////////////////////////////////////////////////
     /// \brief Construct the address from a 32-bits integer
     ///
-    /// This constructor uses the internal representation of
-    /// the address directly. It should be used for optimization
-    /// purposes, and only if you got that representation from
-    /// `IpAddress::toInteger()`.
-    ///
     /// \param address 4 bytes of the address packed into a 32-bits integer
-    ///
-    /// \see `toInteger`
     ///
     ////////////////////////////////////////////////////////////
     explicit IpAddress(std::uint32_t address);
@@ -100,8 +84,6 @@ public:
     ///
     /// \return String representation of the address
     ///
-    /// \see `toInteger`
-    ///
     ////////////////////////////////////////////////////////////
     [[nodiscard]] std::string toString() const;
 
@@ -112,11 +94,9 @@ public:
     /// address, and should be used for optimization purposes only
     /// (like sending the address through a socket).
     /// The integer produced by this function can then be converted
-    /// back to a `sf::IpAddress` with the proper constructor.
+    /// back to a sf::IpAddress with the proper constructor.
     ///
     /// \return 32-bits unsigned integer representation of the address
-    ///
-    /// \see `toString`
     ///
     ////////////////////////////////////////////////////////////
     [[nodiscard]] std::uint32_t toInteger() const;
@@ -130,9 +110,7 @@ public:
     /// Unlike getPublicAddress, this function is fast and may be
     /// used safely anywhere.
     ///
-    /// \return Local IP address of the computer on success, `std::nullopt` otherwise
-    ///
-    /// \see `getPublicAddress`
+    /// \return Local IP address of the computer
     ///
     ////////////////////////////////////////////////////////////
     [[nodiscard]] static std::optional<IpAddress> getLocalAddress();
@@ -154,99 +132,110 @@ public:
     ///
     /// \param timeout Maximum time to wait
     ///
-    /// \return Public IP address of the computer on success, `std::nullopt` otherwise
-    ///
-    /// \see `getLocalAddress`
+    /// \return Public IP address of the computer
     ///
     ////////////////////////////////////////////////////////////
     [[nodiscard]] static std::optional<IpAddress> getPublicAddress(Time timeout = Time::Zero);
 
     ////////////////////////////////////////////////////////////
+    /// \brief Resolve a host name to its IP address
+    ///
+    /// This function converts a host name to its corresponding
+    /// IP address. The host name is looked up using the operating
+    /// system's mechanisms. This may be a simple name like
+    /// "localhost" or a FQDN like "www.google.com", or even an
+    /// IP address formatted as a string like "192.168.1.56".
+    ///
+    /// \param address Host name to resolve
+    ///
+    /// \return The resolved IP address, or std::nullopt if the host name couldn't be resolved
+    ///
+    ////////////////////////////////////////////////////////////
+    [[nodiscard]] static std::optional<IpAddress> resolve(std::string_view address);
+
+    ////////////////////////////////////////////////////////////
     // Static member data
     ////////////////////////////////////////////////////////////
-    // NOLINTBEGIN(readability-identifier-naming)
-    static const IpAddress Any;       //!< Value representing any address (0.0.0.0)
-    static const IpAddress LocalHost; //!< The "localhost" address (for connecting a computer to itself locally)
-    static const IpAddress Broadcast; //!< The "broadcast" address (for sending UDP messages to everyone on a local network)
-    // NOLINTEND(readability-identifier-naming)
+    static const IpAddress None;  ///< Value representing an empty/invalid address
+    static const IpAddress Any;   ///< Value representing any address (0.0.0.0)
+    static const IpAddress LocalHost; ///< The "localhost" address (for connecting a computer to itself locally)
+    static const IpAddress Broadcast; ///< The "broadcast" address (for sending UDP messages to everyone on a local network)
 
 private:
-    friend SFML_NETWORK_API bool operator<(IpAddress left, IpAddress right);
-
     ////////////////////////////////////////////////////////////
     // Member data
     ////////////////////////////////////////////////////////////
-    std::uint32_t m_address; //!< Address stored as an unsigned 32 bit integer
+    std::uint32_t m_address; ///< Address stored as an unsigned 32 bits integer
 };
 
 ////////////////////////////////////////////////////////////
-/// \brief Overload of `operator==` to compare two IP addresses
+/// \brief Overload of == operator to compare two IP addresses
 ///
 /// \param left  Left operand (a IP address)
 /// \param right Right operand (a IP address)
 ///
-/// \return `true` if both addresses are equal
+/// \return True if both addresses are equal
 ///
 ////////////////////////////////////////////////////////////
-[[nodiscard]] SFML_NETWORK_API bool operator==(IpAddress left, IpAddress right);
+[[nodiscard]] SFML_NETWORK_API bool operator==(const IpAddress& left, const IpAddress& right);
 
 ////////////////////////////////////////////////////////////
-/// \brief Overload of `operator!=` to compare two IP addresses
+/// \brief Overload of != operator to compare two IP addresses
 ///
 /// \param left  Left operand (a IP address)
 /// \param right Right operand (a IP address)
 ///
-/// \return `true` if both addresses are different
+/// \return True if both addresses are different
 ///
 ////////////////////////////////////////////////////////////
-[[nodiscard]] SFML_NETWORK_API bool operator!=(IpAddress left, IpAddress right);
+[[nodiscard]] SFML_NETWORK_API bool operator!=(const IpAddress& left, const IpAddress& right);
 
 ////////////////////////////////////////////////////////////
-/// \brief Overload of `operator<` to compare two IP addresses
+/// \brief Overload of < operator to compare two IP addresses
 ///
 /// \param left  Left operand (a IP address)
 /// \param right Right operand (a IP address)
 ///
-/// \return `true` if `left` is lesser than `right`
+/// \return True if \a left is lesser than \a right
 ///
 ////////////////////////////////////////////////////////////
-[[nodiscard]] SFML_NETWORK_API bool operator<(IpAddress left, IpAddress right);
+[[nodiscard]] SFML_NETWORK_API bool operator<(const IpAddress& left, const IpAddress& right);
 
 ////////////////////////////////////////////////////////////
-/// \brief Overload of `operator>` to compare two IP addresses
+/// \brief Overload of > operator to compare two IP addresses
 ///
 /// \param left  Left operand (a IP address)
 /// \param right Right operand (a IP address)
 ///
-/// \return `true` if `left` is greater than `right`
+/// \return True if \a left is greater than \a right
 ///
 ////////////////////////////////////////////////////////////
-[[nodiscard]] SFML_NETWORK_API bool operator>(IpAddress left, IpAddress right);
+[[nodiscard]] SFML_NETWORK_API bool operator>(const IpAddress& left, const IpAddress& right);
 
 ////////////////////////////////////////////////////////////
-/// \brief Overload of `operator<=` to compare two IP addresses
+/// \brief Overload of <= operator to compare two IP addresses
 ///
 /// \param left  Left operand (a IP address)
 /// \param right Right operand (a IP address)
 ///
-/// \return `true` if \a left is lesser or equal than \a right
+/// \return True if \a left is lesser or equal than \a right
 ///
 ////////////////////////////////////////////////////////////
-[[nodiscard]] SFML_NETWORK_API bool operator<=(IpAddress left, IpAddress right);
+[[nodiscard]] SFML_NETWORK_API bool operator<=(const IpAddress& left, const IpAddress& right);
 
 ////////////////////////////////////////////////////////////
-/// \brief Overload of `operator>=` to compare two IP addresses
+/// \brief Overload of >= operator to compare two IP addresses
 ///
 /// \param left  Left operand (a IP address)
 /// \param right Right operand (a IP address)
 ///
-/// \return `true` if `left` is greater or equal than `right`
+/// \return True if \a left is greater or equal than \a right
 ///
 ////////////////////////////////////////////////////////////
-[[nodiscard]] SFML_NETWORK_API bool operator>=(IpAddress left, IpAddress right);
+[[nodiscard]] SFML_NETWORK_API bool operator>=(const IpAddress& left, const IpAddress& right);
 
 ////////////////////////////////////////////////////////////
-/// \brief Overload of `operator>>` to extract an IP address from an input stream
+/// \brief Overload of >> operator to extract an IP address from an input stream
 ///
 /// \param stream  Input stream
 /// \param address IP address to extract
@@ -254,10 +243,10 @@ private:
 /// \return Reference to the input stream
 ///
 ////////////////////////////////////////////////////////////
-SFML_NETWORK_API std::istream& operator>>(std::istream& stream, std::optional<IpAddress>& address);
+SFML_NETWORK_API std::istream& operator>>(std::istream& stream, IpAddress& address);
 
 ////////////////////////////////////////////////////////////
-/// \brief Overload of `operator<<` to print an IP address to an output stream
+/// \brief Overload of << operator to print an IP address to an output stream
 ///
 /// \param stream  Output stream
 /// \param address IP address to print
@@ -265,7 +254,18 @@ SFML_NETWORK_API std::istream& operator>>(std::istream& stream, std::optional<Ip
 /// \return Reference to the output stream
 ///
 ////////////////////////////////////////////////////////////
-SFML_NETWORK_API std::ostream& operator<<(std::ostream& stream, IpAddress address);
+SFML_NETWORK_API std::ostream& operator<<(std::ostream& stream, const IpAddress& address);
+
+////////////////////////////////////////////////////////////
+/// \brief Overload of >> operator to extract an optional IP address from an input stream
+///
+/// \param stream  Input stream
+/// \param address Optional IP address to extract
+///
+/// \return Reference to the input stream
+///
+////////////////////////////////////////////////////////////
+SFML_NETWORK_API std::istream& operator>>(std::istream& stream, std::optional<IpAddress>& address);
 
 } // namespace sf
 

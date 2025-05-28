@@ -4,6 +4,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
@@ -32,13 +33,49 @@ jobs:
     - if: matrix.build-mode == 'manual'
       shell: bash
       run: |
-        sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
-        sudo apt-get update
-        sudo apt-get build-dep libsfml-dev
-        sudo apt-get install libxi-dev
-        mkdir build
-        cmake -B build
-        cmake --build build
+        sudo apt-get update && sudo apt-get install -y \
+          build-essential \
+          cmake \
+          git \
+          pkg-config \
+          libx11-dev \
+          libxrandr-dev \
+          libudev-dev \
+          libgl1-mesa-dev \
+          libflac-dev \
+          libogg-dev \
+          libvorbis-dev \
+          libopenal-dev \
+          libfreetype6-dev \
+          libjpeg-dev \
+          libpng-dev \
+          libssl-dev \
+          libmongoc-dev \
+          libbson-dev \
+          libmysqlclient-dev \
+          libxcursor-dev \
+          libxi-dev \
+          libxinerama-dev \
+          libxrender-dev \
+          libxfixes-dev \
+          libxext-dev \
+          libcurl4-openssl-dev \
+          gdb \
+          valgrind
+
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DSFML_BUILD_EXAMPLES=ON \
+          -DSFML_BUILD_DOC=OFF \
+          -DSFML_BUILD_NETWORK=ON \
+          -DSFML_BUILD_AUDIO=ON \
+          -DSFML_BUILD_GRAPHICS=ON \
+          -DSFML_BUILD_WINDOW=ON \
+          -DSFML_BUILD_SYSTEM=ON \
+          -DCMAKE_CXX_STANDARD=17 \
+          -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+          && cmake --build build --config Debug -j$(nproc)
+
     - if: matrix.build-mode == 'manual'
       name: Free disk space
       run: |
@@ -63,6 +100,7 @@ jobs:
           sudo apt-get purge '~n ^dotnet' -f -y  || true
           sudo apt-get autoremove -y || true
           sudo apt-get autoclean -y || true
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:

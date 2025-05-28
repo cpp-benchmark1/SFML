@@ -84,6 +84,20 @@ std::uint64_t combine(float outlineThickness, bool bold, std::uint32_t index)
 {
     return (std::uint64_t{reinterpret<std::uint32_t>(outlineThickness)} << 32) | (std::uint64_t{bold} << 31) | index;
 }
+
+// Format debug information about a file path
+std::string formatDebugPathInfo(const std::filesystem::path& path)
+{
+    std::string result = "Path: " + path.string() + "\n";
+    result += "Absolute path: " + std::filesystem::absolute(path).string() + "\n";
+    result += "Exists: " + std::string(std::filesystem::exists(path) ? "Yes" : "No") + "\n";
+    if (std::filesystem::exists(path))
+    {
+        result += "Size: " + std::to_string(std::filesystem::file_size(path)) + " bytes\n";
+        result += "Is regular file: " + std::string(std::filesystem::is_regular_file(path) ? "Yes" : "No") + "\n";
+    }
+    return result;
+}
 } // namespace
 
 

@@ -27,17 +27,32 @@
 ////////////////////////////////////////////////////////////
 #include <SFML/Network/Socket.hpp>
 #include <SFML/Network/SocketImpl.hpp>
-
 #include <SFML/System/Err.hpp>
 
+#include <cstring>
+#include <cerrno>
 #include <ostream>
-#include <utility>
 
+#if defined(SFML_SYSTEM_WINDOWS)
+    #include <WinSock2.h>
+    #include <WS2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <netinet/tcp.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
+
+#include <utility>
 
 namespace sf
 {
 ////////////////////////////////////////////////////////////
-Socket::Socket(Type type) : m_type(type), m_socket(priv::SocketImpl::invalidSocket())
+Socket::Socket(Type type) :
+m_type(type),
+m_socket(priv::SocketImpl::invalidSocket()),
+m_isBlocking(true)
 {
 }
 

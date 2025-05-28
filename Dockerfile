@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     git \
+    pkg-config \
     libx11-dev \
     libxrandr-dev \
     libudev-dev \
@@ -18,13 +19,21 @@ RUN apt-get update && apt-get install -y \
     libvorbis-dev \
     libopenal-dev \
     libfreetype6-dev \
-    libxi-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libssl-dev \
+    libmongoc-dev \
+    libbson-dev \
+    libmysqlclient-dev \
     libxcursor-dev \
+    libxi-dev \
     libxinerama-dev \
     libxrandr-dev \
     libxrender-dev \
     libxfixes-dev \
     libxext-dev \
+    libcurl4-openssl-dev \
+
     gdb \
     valgrind \
     && rm -rf /var/lib/apt/lists/*
@@ -35,24 +44,24 @@ WORKDIR /sfml
 # Copy the source code
 COPY . .
 
-# Create build directory and configure with debug flags
-RUN mkdir -p build && \
-    cd build && \
-    cmake .. \
-        -DCMAKE_BUILD_TYPE=Debug \
-        -DSFML_BUILD_EXAMPLES=ON \
-        -DSFML_BUILD_DOC=OFF \
-        -DSFML_BUILD_NETWORK=ON \
-        -DSFML_BUILD_AUDIO=ON \
-        -DSFML_BUILD_GRAPHICS=ON \
-        -DSFML_BUILD_WINDOW=ON \
-        -DSFML_BUILD_SYSTEM=ON
-
-# Build the project
-RUN cd build && make -j$(nproc)
+# Configure and build the project with debug flags and SFML modules
+RUN cmake -B build \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DSFML_BUILD_EXAMPLES=ON \
+    -DSFML_BUILD_DOC=OFF \
+    -DSFML_BUILD_NETWORK=ON \
+    -DSFML_BUILD_AUDIO=ON \
+    -DSFML_BUILD_GRAPHICS=ON \
+    -DSFML_BUILD_WINDOW=ON \
+    -DSFML_BUILD_SYSTEM=ON \
+    -DCMAKE_CXX_STANDARD=17 \
+    -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+    && cmake --build build --config Debug -j$(nproc)
 
 # Set environment variables for testing
 ENV LD_LIBRARY_PATH=/sfml/build/lib
 
 # Set the entry point
+
 ENTRYPOINT ["/bin/bash"] 
+

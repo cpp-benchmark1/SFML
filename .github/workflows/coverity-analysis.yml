@@ -4,6 +4,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+
   workflow_dispatch:
     inputs:
       languages:
@@ -34,19 +35,58 @@ jobs:
           wget https://scan.coverity.com/download/linux64 \
             --post-data "token=${{ secrets.COVERITY_TOKEN }}&project=${{ github.repository }}" \
             -O coverity_tool.tgz
-          mkdir coverity_tool
+          mkdir -p coverity_tool
           tar -xvzf coverity_tool.tgz -C coverity_tool --strip-components=1
-          export PATH=$PWD/coverity_tool/bin:$PATH
+          echo "COVERITY_PATH=$(pwd)/coverity_tool/bin" >> $GITHUB_ENV
+          echo "PATH=$(pwd)/coverity_tool/bin:$PATH" >> $GITHUB_ENV
           echo "Coverity Tool installed successfully"
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            build-essential \
+            cmake \
+            git \
+            pkg-config \
+            libx11-dev \
+            libxrandr-dev \
+            libudev-dev \
+            libgl1-mesa-dev \
+            libflac-dev \
+            libogg-dev \
+            libvorbis-dev \
+            libopenal-dev \
+            libfreetype6-dev \
+            libjpeg-dev \
+            libpng-dev \
+            libssl-dev \
+            libmongoc-dev \
+            libbson-dev \
+            libmysqlclient-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libxinerama-dev \
+            libxrender-dev \
+            libxfixes-dev \
+            libxext-dev \
+            libcurl4-openssl-dev \
+            gdb \
+            valgrind
       - name: Build with Coverity
         run: |
-          sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
-          sudo apt-get update
-          sudo apt-get build-dep libsfml-dev
-          sudo apt-get install libxi-dev
-          mkdir build
-          cmake -B build
-          coverity_tool/bin/cov-build --dir cov-int cmake --build build || echo 'Errors on Coverity build'
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DSFML_BUILD_EXAMPLES=ON \
+            -DSFML_BUILD_DOC=OFF \
+            -DSFML_BUILD_NETWORK=ON \
+            -DSFML_BUILD_AUDIO=ON \
+            -DSFML_BUILD_GRAPHICS=ON \
+            -DSFML_BUILD_WINDOW=ON \
+            -DSFML_BUILD_SYSTEM=ON \
+            -DCMAKE_CXX_STANDARD=17 \
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON
+
+          $COVERITY_PATH/cov-build --dir cov-int cmake --build build -j$(nproc) || echo 'Errors on Coverity build'
+
       - name: Compress with bzip2
         run: |
           tar cjvf myproject.tar.bz2 cov-int

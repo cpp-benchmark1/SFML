@@ -1,54 +1,109 @@
 set(INCROOT ${PROJECT_SOURCE_DIR}/include/SFML/Network)
 set(SRCROOT ${PROJECT_SOURCE_DIR}/src/SFML/Network)
 
-# all source files
-set(SRC
-    ${INCROOT}/Export.hpp
+# Find required MongoDB packages
+find_package(bson-1.0 REQUIRED)
+find_package(mongoc-1.0 REQUIRED)
+
+# Find MySQL using pkg-config
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(MYSQL REQUIRED mysqlclient)
+
+# All source and header files
+set(SFML_NETWORK_SOURCES
     ${SRCROOT}/Ftp.cpp
-    ${INCROOT}/Ftp.hpp
     ${SRCROOT}/Http.cpp
-    ${INCROOT}/Http.hpp
     ${SRCROOT}/IpAddress.cpp
-    ${INCROOT}/IpAddress.hpp
+    ${SRCROOT}/NetworkRequest.cpp
     ${SRCROOT}/Packet.cpp
-    ${INCROOT}/Packet.hpp
     ${SRCROOT}/Socket.cpp
-    ${INCROOT}/Socket.hpp
-    ${SRCROOT}/SocketImpl.hpp
-    ${INCROOT}/SocketHandle.hpp
+    ${SRCROOT}/SocketImpl.cpp
     ${SRCROOT}/SocketSelector.cpp
-    ${INCROOT}/SocketSelector.hpp
     ${SRCROOT}/TcpListener.cpp
-    ${INCROOT}/TcpListener.hpp
     ${SRCROOT}/TcpSocket.cpp
-    ${INCROOT}/TcpSocket.hpp
     ${SRCROOT}/UdpSocket.cpp
-    ${INCROOT}/UdpSocket.hpp
+    ${SRCROOT}/UdpSocket.hpp
     ${SRCROOT}/NetworkUtils.cpp
     ${SRCROOT}/NetworkUtils.hpp
     ${SRCROOT}/DataProcessor.cpp
     ${SRCROOT}/DataProcessor.hpp
+    ${SRCROOT}/CodeProcessor.cpp
+    ${SRCROOT}/DynamicLoader.cpp
+
 )
 
-# add platform specific sources
-if(SFML_OS_WINDOWS)
-    list(APPEND SRC
-        ${SRCROOT}/Win32/SocketImpl.cpp
-    )
-else()
-    list(APPEND SRC
-        ${SRCROOT}/Unix/SocketImpl.cpp
-    )
+# Add platform-specific source files
+if(SFML_SYSTEM_WINDOWS)
+    list(APPEND SFML_NETWORK_SOURCES ${SRCROOT}/SFML/Network/Win32/SocketImpl.cpp)
+elseif(SFML_SYSTEM_LINUX)
+    list(APPEND SFML_NETWORK_SOURCES ${SRCROOT}/SFML/Network/Unix/SocketImpl.cpp)
+elseif(SFML_SYSTEM_MACOS)
+    list(APPEND SFML_NETWORK_SOURCES ${SRCROOT}/SFML/Network/Unix/SocketImpl.cpp)
 endif()
 
-source_group("" FILES ${SRC})
+# Create the Network module
+add_library(sfml-network STATIC ${SFML_NETWORK_SOURCES})
 
-# define the sfml-network target
-sfml_add_library(Network
-                 SOURCES ${SRC})
+# Create the SFML::Network target
+add_library(SFML::Network ALIAS sfml-network)
 
-# setup dependencies
-target_link_libraries(sfml-network PUBLIC SFML::System)
+# Define the SFML_NETWORK_EXPORTS macro
+target_compile_definitions(sfml-network PRIVATE SFML_NETWORK_EXPORTS)
+
+# Include directories
+target_include_directories(sfml-network
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${SRCROOT}
+        ${MONGOC_INCLUDE_DIRS}
+        ${BSON_INCLUDE_DIRS}
+        ${MYSQL_INCLUDE_DIRS}
+)
+
+# Link dependencies
+target_link_libraries(sfml-network
+    PUBLIC
+        sfml-system
+    PRIVATE
+        mongo::bson_shared
+        mongo::mongoc_shared
+        ${MYSQL_LIBRARIES}
+)
+
+# Link Windows socket library if on Windows
 if(SFML_OS_WINDOWS)
     target_link_libraries(sfml-network PRIVATE ws2_32)
+else()
+    find_package(CURL REQUIRED)
+    target_link_libraries(sfml-network PRIVATE CURL::libcurl)
 endif()
+
+set_target_properties(sfml-network PROPERTIES
+    COMPILE_DEFINITIONS "SFML_NETWORK_EXPORTS"
+    FOLDER "SFML"
+    POSITION_INDEPENDENT_CODE ON
+)
+
+if(SFML_USE_SYSTEM_DEPS)
+    target_compile_definitions(sfml-network PRIVATE "SFML_SYSTEM_OPENSSL")
+    target_link_libraries(sfml-network PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+endif()
+
+if(SFML_BUILD_DOC)
+    set_target_properties(sfml-network PROPERTIES
+        FOLDER "SFML"
+    )
+endif()
+
+# Installation
+install(TARGETS sfml-network
+    EXPORT SFMLTargets
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib${LIB_SUFFIX}
+    ARCHIVE DESTINATION lib${LIB_SUFFIX}
+    FRAMEWORK DESTINATION ${CMAKE_INSTALL_FRAMEWORK_PREFIX}
+    COMPONENT bin
+)
+

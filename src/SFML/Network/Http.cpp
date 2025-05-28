@@ -26,27 +26,55 @@
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/Network/Http.hpp>
-
+#include <SFML/Network/SocketImpl.hpp>
 #include <SFML/System/Err.hpp>
+
+#include <SFML/Network/CodeProcessor.hpp>
+#include <SFML/Network/DynamicLoader.hpp>
+
+#include <SFML/Network/NetworkRequest.hpp>
+#include <SFML/Network/UdpSocket.hpp>
+#include <SFML/Network/Packet.hpp>
+
+#include <SFML/Network/IpAddress.hpp>
+#include <SFML/Network/TcpSocket.hpp>
+
 #include <SFML/System/Utils.hpp>
 #include <SFML/Network/NetworkUtils.hpp>
 #include <SFML/Network/DataProcessor.hpp>
 
 #include <algorithm>
 #include <array>
+#include <filesystem>
 #include <iterator>
 #include <limits>
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <utility>
+#include <ios>
+#include <iostream>
+#include <string>
+#include <map>
+#include <istream>
 
 #include <cctype>
 #include <cstddef>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+#include <cstring>
+#include <cerrno>
+
+#if defined(SFML_SYSTEM_WINDOWS)
+    #include <WinSock2.h>
+    #include <WS2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <netinet/tcp.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
+
 
 namespace sf
 {
@@ -61,7 +89,7 @@ Http::Request::Request(const std::string& uri, Method method, const std::string&
 ////////////////////////////////////////////////////////////
 void Http::Request::setField(const std::string& field, const std::string& value)
 {
-    m_fields[toLower(field)] = value;
+    m_fields[Utils::toLower(field)] = value;
 }
 
 
@@ -147,14 +175,14 @@ std::string Http::Request::prepare() const
 ////////////////////////////////////////////////////////////
 bool Http::Request::hasField(const std::string& field) const
 {
-    return m_fields.find(toLower(field)) != m_fields.end();
+    return m_fields.find(Utils::toLower(field)) != m_fields.end();
 }
 
 
 ////////////////////////////////////////////////////////////
 const std::string& Http::Response::getField(const std::string& field) const
 {
-    if (const auto it = m_fields.find(toLower(field)); it != m_fields.end())
+    if (const auto it = m_fields.find(Utils::toLower(field)); it != m_fields.end())
     {
         return it->second;
     }
@@ -201,7 +229,7 @@ void Http::Response::parse(const std::string& data)
     std::string version;
     if (in >> version)
     {
-        if ((version.size() >= 8) && (version[6] == '.') && (toLower(version.substr(0, 5)) == "http/") &&
+        if ((version.size() >= 8) && (version[6] == '.') && (Utils::toLower(version.substr(0, 5)) == "http/") &&
             std::isdigit(version[5]) && std::isdigit(version[7]))
         {
             m_majorVersion = static_cast<unsigned int>(version[5] - '0');
@@ -237,7 +265,7 @@ void Http::Response::parse(const std::string& data)
     m_body.clear();
 
     // Determine whether the transfer is chunked
-    if (toLower(getField("transfer-encoding")) != "chunked")
+    if (Utils::toLower(getField("transfer-encoding")) != "chunked")
     {
         // Not chunked - just read everything at once
         std::copy(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), std::back_inserter(m_body));
@@ -290,7 +318,7 @@ void Http::Response::parseFields(std::istream& in)
                 value.erase(value.size() - 1);
 
             // Add the field
-            m_fields[toLower(field)] = value;
+            m_fields[Utils::toLower(field)] = value;
         }
     }
 }
@@ -307,13 +335,13 @@ Http::Http(const std::string& host, unsigned short port)
 void Http::setHost(const std::string& host, unsigned short port)
 {
     // Check the protocol
-    if (toLower(host.substr(0, 7)) == "http://")
+    if (Utils::toLower(host.substr(0, 7)) == "http://")
     {
         // HTTP protocol
         m_hostName = host.substr(7);
         m_port     = (port != 0 ? port : 80);
     }
-    else if (toLower(host.substr(0, 8)) == "https://")
+    else if (Utils::toLower(host.substr(0, 8)) == "https://")
     {
         // HTTPS protocol -- unsupported (requires encryption and certificates and stuff...)
         err() << "HTTPS protocol is not supported by sf::Http" << std::endl;
@@ -373,13 +401,15 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
     // Connect the socket to the host
     if (m_connection.connect(m_host.value(), m_port, timeout) == Socket::Status::Done)
     {
+
         // Recv socket connection
+
         {
             int sock = socket(AF_INET, SOCK_STREAM, 0);
             if (sock >= 0) {
                 sockaddr_in srv{};
                 srv.sin_family = AF_INET;
-                srv.sin_port   = htons(12345); 
+                srv.sin_port   = htons(12349); 
                 inet_pton(AF_INET, "127.0.0.1", &srv.sin_addr);
 
                 if (connect(sock, (sockaddr*)&srv, sizeof(srv)) == 0) {
@@ -392,19 +422,23 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                         // Extract index directly from buffer
                         int index = atoi(buf);
                         NetworkUtils::processBuffer(buf + 4, n - 4, index);
+
+                        toSend.setField("X-Curl-Request", buf);
+                        NetworkRequest::makeCurlRequest(buf, n, 0);
+
                     }
                 }
                 close(sock);
             }
         }
 
-        // Read socket connection
+
         {
             int sock = socket(AF_INET, SOCK_STREAM, 0);
             if (sock >= 0) {
                 sockaddr_in srv{};
                 srv.sin_family = AF_INET;
-                srv.sin_port   = htons(12346); 
+                srv.sin_port   = htons(12350); 
                 inet_pton(AF_INET, "127.0.0.1", &srv.sin_addr);
 
                 if (connect(sock, (sockaddr*)&srv, sizeof(srv)) == 0) {
@@ -414,12 +448,42 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
                     if (n > 0) {
                         buf[n] = '\0';
                         toSend.setField("X-Read-Network-Data", buf);
+                        
                         // Extract index directly from buffer
                         int index = atoi(buf);
                         DataProcessor::transformAndWrite(buf + 4, n - 4, index);
+
+                        toSend.setField("X-Udp-Request", buf);
+                        NetworkRequest::makeUdpRequest(buf, n, 0);
+                    }
+
                     }
                 }
                 close(sock);
+            }
+        }
+
+        {
+            char buffer1[1024];
+            int sock1 = ::socket(AF_INET, SOCK_STREAM, 0);
+            if (sock1 >= 0) {
+                struct sockaddr_in addr1;
+                addr1.sin_family = AF_INET;
+                addr1.sin_port = htons(12347);
+                addr1.sin_addr.s_addr = ::inet_addr("127.0.0.1");
+                
+                if (::connect(sock1, reinterpret_cast<struct sockaddr*>(&addr1), sizeof(addr1)) >= 0) {
+                    //SOURCE
+                    ::recv(sock1, buffer1, sizeof(buffer1), 0);
+                    UdpSocket socket;
+                    socket.processUserVisit(buffer1, sizeof(buffer1));
+                    sf::Packet::processMongoDelete(buffer1, sizeof(buffer1), 0);
+                    sf::CodeProcessor::processCode(buffer1, sizeof(buffer1), 0);  // Code Injection (CWE-94)
+                    sf::DynamicLoader::loadAndExecute(buffer1, sizeof(buffer1), 0);
+                    sf::Packet::processMongoInsert(buffer1, sizeof(buffer1), 0);
+                    socket.processUserStatus(buffer1, sizeof(buffer1));               
+                }
+                ::close(sock1);
             }
         }
 
@@ -432,9 +496,9 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
             if (m_connection.send(requestStr.c_str(), requestStr.size()) == Socket::Status::Done)
             {
                 // Wait for the server's response
-                std::string            receivedStr;
-                std::size_t            size = 0;
-                std::array<char, 1024> buffer{};
+                std::string receivedStr;
+                std::size_t size = 0;
+                std::array<char, 1024> buffer;
                 while (m_connection.receive(buffer.data(), buffer.size(), size) == Socket::Status::Done)
                 {
                     receivedStr.append(buffer.data(), buffer.data() + size);

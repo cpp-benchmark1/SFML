@@ -25,14 +25,26 @@
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
-#include <SFML/Network/SocketImpl.hpp>
 #include <SFML/Network/TcpListener.hpp>
+#include <SFML/Network/SocketImpl.hpp>
 #include <SFML/Network/TcpSocket.hpp>
 
 #include <SFML/System/Err.hpp>
 
+#include <cstring>
+#include <cerrno>
 #include <ostream>
 
+#if defined(SFML_SYSTEM_WINDOWS)
+    #include <WinSock2.h>
+    #include <WS2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <netinet/tcp.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
 
 namespace sf
 {
@@ -49,7 +61,7 @@ unsigned short TcpListener::getLocalPort() const
     {
         // Retrieve information about the local end of the socket
         sockaddr_in                  address{};
-        priv::SocketImpl::AddrLength size = sizeof(address);
+        socklen_t size = sizeof(address);
         if (getsockname(getNativeHandle(), reinterpret_cast<sockaddr*>(&address), &size) != -1)
         {
             return ntohs(address.sin_port);
@@ -115,7 +127,7 @@ Socket::Status TcpListener::accept(TcpSocket& socket)
 
     // Accept a new connection
     sockaddr_in                  address{};
-    priv::SocketImpl::AddrLength length = sizeof(address);
+    socklen_t length = sizeof(address);
     const SocketHandle           remote = ::accept(getNativeHandle(), reinterpret_cast<sockaddr*>(&address), &length);
 
     // Check for errors

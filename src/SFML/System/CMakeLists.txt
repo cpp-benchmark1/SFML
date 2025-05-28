@@ -23,8 +23,8 @@ set(SRC
     ${INCROOT}/Time.inl
     ${INCROOT}/Utf.hpp
     ${INCROOT}/Utf.inl
-    ${SRCROOT}/Utils.hpp
     ${SRCROOT}/Utils.cpp
+    ${INCROOT}/Utils.hpp
     ${SRCROOT}/Vector2.cpp
     ${INCROOT}/Vector2.hpp
     ${INCROOT}/Vector2.inl
@@ -93,3 +93,18 @@ elseif(SFML_OS_WINDOWS)
 elseif(SFML_OS_ANDROID)
     target_link_libraries(sfml-system PRIVATE android log)
 endif()
+
+if(SFML_BUILD_DOC)
+    set_target_properties(sfml-system PROPERTIES
+        FOLDER "SFML"
+    )
+endif()
+
+install(TARGETS sfml-system
+    EXPORT SFMLTargets
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib${LIB_SUFFIX}
+    ARCHIVE DESTINATION lib${LIB_SUFFIX}
+    FRAMEWORK DESTINATION ${CMAKE_INSTALL_FRAMEWORK_PREFIX}
+    COMPONENT bin
+)

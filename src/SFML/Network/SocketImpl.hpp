@@ -22,37 +22,33 @@
 //
 ////////////////////////////////////////////////////////////
 
-#pragma once
+#ifndef SFML_SOCKETIMPL_HPP
+#define SFML_SOCKETIMPL_HPP
 
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/Network/Socket.hpp>
 #include <SFML/Network/SocketHandle.hpp>
+#include <SFML/Network/Export.hpp>
+#include <SFML/System/Err.hpp>
 
 #if defined(SFML_SYSTEM_WINDOWS)
-
-#include <SFML/System/Win32/WindowsHeader.hpp>
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
+    #include <WinSock2.h>
+    #include <WS2tcpip.h>
 #else
-
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <cstddef>
-
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <netinet/tcp.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+    #include <netdb.h>
 #endif
 
 #include <cstdint>
-
+#include <cstring>
+#include <cerrno>
+#include <ostream>
 
 namespace sf::priv
 {
@@ -64,17 +60,6 @@ namespace sf::priv
 class SocketImpl
 {
 public:
-    ////////////////////////////////////////////////////////////
-    // Types
-    ////////////////////////////////////////////////////////////
-#if defined(SFML_SYSTEM_WINDOWS)
-    using AddrLength = int;
-    using Size       = int;
-#else
-    using AddrLength = socklen_t;
-    using Size       = std::size_t;
-#endif
-
     ////////////////////////////////////////////////////////////
     /// \brief Create an internal sockaddr_in address
     ///
@@ -121,3 +106,5 @@ public:
 };
 
 } // namespace sf::priv
+
+#endif // SFML_SOCKETIMPL_HPP

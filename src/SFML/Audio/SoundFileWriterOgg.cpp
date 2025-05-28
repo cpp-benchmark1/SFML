@@ -26,7 +26,6 @@
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/Audio/SoundFileWriterOgg.hpp>
-
 #include <SFML/System/Err.hpp>
 #include <SFML/System/Utils.hpp>
 
@@ -36,13 +35,14 @@
 
 #include <cassert>
 
-
-namespace sf::priv
+namespace sf
 {
+    namespace priv
+    {
 ////////////////////////////////////////////////////////////
 bool SoundFileWriterOgg::check(const std::filesystem::path& filename)
 {
-    return toLower(filename.extension().string()) == ".ogg";
+    return sf::Utils::toLower(filename.extension().string()) == ".ogg";
 }
 
 
@@ -144,7 +144,7 @@ bool SoundFileWriterOgg::open(const std::filesystem::path&     filename,
     if (status < 0)
     {
         err() << "Failed to write ogg/vorbis file (unsupported bitrate)\n"
-              << formatDebugPathInfo(filename) << std::endl;
+              << sf::Utils::formatDebugPathInfo(filename) << std::endl;
         close();
         return false;
     }
@@ -154,7 +154,8 @@ bool SoundFileWriterOgg::open(const std::filesystem::path&     filename,
     m_file.open(filename, std::ios::binary);
     if (!m_file)
     {
-        err() << "Failed to write ogg/vorbis file (cannot open file)\n" << formatDebugPathInfo(filename) << std::endl;
+        err() << "Failed to write ogg/vorbis file (cannot open file)\n" 
+              << sf::Utils::formatDebugPathInfo(filename) << std::endl;
         close();
         return false;
     }
@@ -172,7 +173,7 @@ bool SoundFileWriterOgg::open(const std::filesystem::path&     filename,
     if (status < 0)
     {
         err() << "Failed to write ogg/vorbis file (cannot generate the headers)\n"
-              << formatDebugPathInfo(filename) << std::endl;
+              << sf::Utils::formatDebugPathInfo(filename) << std::endl;
         close();
         return false;
     }
@@ -282,4 +283,5 @@ void SoundFileWriterOgg::close()
     vorbis_info_clear(&m_vorbis);
 }
 
-} // namespace sf::priv
+    } // namespace priv
+} // namespace sf
