@@ -54,10 +54,10 @@ namespace sf
             std::transform(result.begin(), result.end(), result.begin(),
                           [](unsigned char c) { return std::tolower(c); });
             return result;
-        }
-        
+}
+
         std::string trim(const std::string& str)
-        {
+{
             const std::string whitespace = " \t\r\n";
             size_t start = str.find_first_not_of(whitespace);
             if (start == std::string::npos)
@@ -76,8 +76,8 @@ namespace sf
         {
             return str.size() >= suffix.size() &&
                    str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
-        }
-        
+}
+
         void safeCopy(void* dest, const void* src, size_t size)
         {
             if (dest && src && size > 0)

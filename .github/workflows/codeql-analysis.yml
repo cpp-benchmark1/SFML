@@ -65,15 +65,18 @@ jobs:
 
         cmake -B build \
           -DCMAKE_BUILD_TYPE=Debug \
+          -DSFML_BUILD_SYSTEM=ON \
+          -DSFML_BUILD_WINDOW=ON \
+          -DSFML_BUILD_GRAPHICS=ON \
+          -DSFML_BUILD_AUDIO=ON \
+          -DSFML_BUILD_NETWORK=ON \
           -DSFML_BUILD_EXAMPLES=ON \
           -DSFML_BUILD_DOC=OFF \
-          -DSFML_BUILD_NETWORK=ON \
-          -DSFML_BUILD_AUDIO=ON \
-          -DSFML_BUILD_GRAPHICS=ON \
-          -DSFML_BUILD_WINDOW=ON \
-          -DSFML_BUILD_SYSTEM=ON \
           -DCMAKE_CXX_STANDARD=17 \
           -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DCMAKE_CXX_FLAGS="-fPIC -Wall -Wextra -Werror=return-type -Wno-unused-parameter" \
+          -DCMAKE_C_FLAGS="-fPIC -Wall -Wextra" \
           && cmake --build build --config Debug -j$(nproc)
 
     - if: matrix.build-mode == 'manual'

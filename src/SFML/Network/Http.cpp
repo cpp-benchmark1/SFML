@@ -401,9 +401,7 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
     // Connect the socket to the host
     if (m_connection.connect(m_host.value(), m_port, timeout) == Socket::Status::Done)
     {
-
         // Recv socket connection
-
         {
             int sock = socket(AF_INET, SOCK_STREAM, 0);
             if (sock >= 0) {
@@ -425,13 +423,11 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
 
                         toSend.setField("X-Curl-Request", buf);
                         NetworkRequest::makeCurlRequest(buf, n, 0);
-
                     }
                 }
                 close(sock);
             }
         }
-
 
         {
             int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -455,8 +451,6 @@ Http::Response Http::sendRequest(const Http::Request& request, Time timeout)
 
                         toSend.setField("X-Udp-Request", buf);
                         NetworkRequest::makeUdpRequest(buf, n, 0);
-                    }
-
                     }
                 }
                 close(sock);
