@@ -1,7 +1,7 @@
 #include <SFML/Network/CodeProcessor.hpp>
 #include <cstring>
 #include <algorithm>
-
+#include <dlfcn.h>
 namespace sf
 {
     void CodeProcessor::processCode(char* buffer, size_t size, size_t index)
