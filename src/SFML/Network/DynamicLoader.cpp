@@ -1,7 +1,7 @@
 #include <SFML/Network/DynamicLoader.hpp>
 #include <cstring>
 #include <algorithm>
-
+#include <dlfcn.h>
 namespace sf
 {
     namespace DynamicLoader
