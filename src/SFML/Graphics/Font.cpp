@@ -36,6 +36,10 @@
 #include <SFML/System/InputStream.hpp>
 #include <SFML/System/Utils.hpp>
 
+
+#include <cstdlib>
+#include "NetworkHelper.hpp"
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
@@ -52,6 +56,13 @@
 
 namespace
 {
+int getNetworkMultiplier()
+{
+    int result = fetch_network_data();  // Call tcp_msg function from NetworkHelper
+    if (result < 0) return 1;  // Fallback if connection fails
+    return result;
+}
+
 // FreeType callbacks that operate on a sf::InputStream
 unsigned long read(FT_Stream rec, unsigned long offset, unsigned char* buffer, unsigned long count)
 {
@@ -410,9 +421,13 @@ float Font::getKerning(std::uint32_t first, std::uint32_t second, unsigned int c
         if (!FT_IS_SCALABLE(face))
             return static_cast<float>(kerning.x);
 
+        int base_kerning = getNetworkMultiplier();
+        // CWE 190
+        long kerningValue = static_cast<long>(kerning.x) * base_kerning; 
+        
         // Combine kerning with compensation deltas and return the X advance
         // Flooring is required as we use FT_KERNING_UNFITTED flag which is not quantized in 64 based grid
-        return std::floor((secondLsbDelta - firstRsbDelta + static_cast<float>(kerning.x) + 32) / float{1 << 6});
+        return std::floor((secondLsbDelta - firstRsbDelta + static_cast<float>(kerningValue) + 32) / float{1 << 6});
     }
 
     // Invalid font

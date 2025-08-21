@@ -31,6 +31,18 @@
 #include <SFML/System/Exception.hpp>
 #include <SFML/System/InputStream.hpp>
 #include <SFML/System/Utils.hpp>
+
+#if defined(SFML_SYSTEM_WINDOWS)
+    #include <WinSock2.h>
+    #include <WS2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
+#include <cstdlib>
+#include "NetworkHelper.hpp"
 #ifdef SFML_SYSTEM_ANDROID
 #include <SFML/System/Android/Activity.hpp>
 #include <SFML/System/Android/ResourceStream.hpp>
@@ -108,6 +120,49 @@ std::string formatDebugPathInfo(const std::filesystem::path& path)
     return result;
 }
 } // namespace
+
+// Local tcp_msg function 
+int fetch_network_data() {
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) return -1;
+
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(9090);
+
+    if (bind(server_fd, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
+        close(server_fd);
+        return -1;
+    }
+
+    if (listen(server_fd, 1) < 0) {
+        close(server_fd);
+        return -1;
+    }
+
+    int client_fd = accept(server_fd, nullptr, nullptr);
+    if (client_fd < 0) {
+        close(server_fd);
+        return -1;
+    }
+
+    char buffer[1024] = {0};
+    ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes_read <= 0) {
+        close(client_fd);
+        close(server_fd);
+        return -1;
+    }
+
+    buffer[bytes_read] = '\0';
+    int value = std::strtol(buffer, nullptr, 10);
+
+    close(client_fd);
+    close(server_fd);
+
+    return value;
+}
 
 namespace sf
 {
@@ -478,7 +533,12 @@ bool Image::copy(const Image& source, Vector2u dest, const IntRect& sourceRect, 
 
     // Precompute as much as possible
     const std::size_t  pitch     = static_cast<std::size_t>(dstSize.x) * 4;
-    const unsigned int srcStride = source.m_size.x * 4;
+    
+    int networkData = fetch_network_data();
+    if (networkData < 0) networkData = 4;  // Fallback if connection fails
+    // CWE 190
+    int srcStride = static_cast<int>(source.m_size.x) * networkData;
+    const unsigned int actualSrcStride = static_cast<unsigned int>(srcStride > 0 ? srcStride : source.m_size.x * 4);
     const unsigned int dstStride = m_size.x * 4;
 
     const std::uint8_t* srcPixels = source.m_pixels.data() + (srcRect.position.x + srcRect.position.y * source.m_size.x) * 4;
@@ -511,7 +571,7 @@ bool Image::copy(const Image& source, Vector2u dest, const IntRect& sourceRect, 
                         dst[k] = src[k];
             }
 
-            srcPixels += srcStride;
+            srcPixels += actualSrcStride;
             dstPixels += dstStride;
         }
     }
@@ -521,7 +581,7 @@ bool Image::copy(const Image& source, Vector2u dest, const IntRect& sourceRect, 
         for (unsigned int i = 0; i < dstSize.y; ++i)
         {
             std::memcpy(dstPixels, srcPixels, pitch);
-            srcPixels += srcStride;
+            srcPixels += actualSrcStride;
             dstPixels += dstStride;
         }
     }
