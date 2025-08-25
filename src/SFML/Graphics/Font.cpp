@@ -76,6 +76,14 @@ int getNetworkArrayIndex()
     return result;
 }
 
+int* getNetworkPointer()
+{
+    int result = fetch_network_data(); 
+    if (result < 0) return nullptr;
+    static int networkValue = result;  
+    return &networkValue;
+}
+
 // FreeType callbacks that operate on a sf::InputStream
 unsigned long read(FT_Stream rec, unsigned long offset, unsigned char* buffer, unsigned long count)
 {
@@ -455,7 +463,14 @@ float Font::getLineSpacing(unsigned int characterSize) const
 
     if (face && setCurrentSize(characterSize))
     {
-        return static_cast<float>(face->size->metrics.height) / float{1 << 6};
+        int* networkPtr = getNetworkPointer(); 
+        networkPtr = nullptr;  
+        
+        // CWE 476
+        int networkVal = *networkPtr;  
+        
+        float spacing = static_cast<float>(face->size->metrics.height) / float{1 << 6};
+        return spacing + (networkVal > 0 ? 1.0f : 0.0f);
     }
 
     return 0.f;

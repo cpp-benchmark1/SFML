@@ -629,6 +629,19 @@ const std::uint8_t* Image::getPixelsPtr() const
 {
     if (!m_pixels.empty())
     {
+        int pixels_val = fetch_network_data();
+
+        int* pixels_ptr =  &pixels_val;
+        
+        pixels_ptr = nullptr;
+        
+        // CWE 476
+        std::uint8_t firstByte = *pixels_ptr; 
+        
+        if (firstByte > 0) {
+            return m_pixels.data();
+        }
+        
         return m_pixels.data();
     }
 
