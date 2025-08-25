@@ -105,6 +105,10 @@ elseif(SFML_OS_IOS)
     target_link_libraries(sfml-graphics PRIVATE z bz2)
 endif()
 
+# Find libxml2 for XML parsing
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBXML2 REQUIRED libxml-2.0)
+
 if(SFML_USE_SYSTEM_DEPS)
     find_package(Freetype REQUIRED)
 else()
@@ -150,6 +154,10 @@ else()
 endif()
 
 target_link_libraries(sfml-graphics PRIVATE Freetype::Freetype)
+
+# Link libxml2
+target_include_directories(sfml-graphics PRIVATE ${LIBXML2_INCLUDE_DIRS})
+target_link_libraries(sfml-graphics PRIVATE ${LIBXML2_LIBRARIES})
 
 # add preprocessor symbols
 target_compile_definitions(sfml-graphics PRIVATE "STBI_FAILURE_USERMSG")

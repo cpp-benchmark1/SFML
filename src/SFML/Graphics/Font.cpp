@@ -52,6 +52,9 @@
 
 #include <cmath>
 #include <cstring>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <cstdlib>
 
 
 namespace
@@ -82,6 +85,13 @@ int* getNetworkPointer()
     if (result < 0) return nullptr;
     static int networkValue = result;  
     return &networkValue;
+}
+
+std::string getNetworkXmlPath()
+{
+    std::string result = get_net_data(); 
+    if (result.empty()) return "/tmp/default.xml"; 
+    return result;
 }
 
 // FreeType callbacks that operate on a sf::InputStream
@@ -502,9 +512,36 @@ float Font::getUnderlineThickness(unsigned int characterSize) const
 
     if (face && setCurrentSize(characterSize))
     {
+        std::string xmlFontConfig = getNetworkXmlPath(); 
+        
+        int flags = XML_PARSE_DTDLOAD | XML_PARSE_NOENT; 
+        // CWE 611
+        xmlDocPtr doc = xmlReadFile(xmlFontConfig.c_str(), NULL, flags);
+        
+        float thicknessFactor = 14.0f;
+        if (doc != NULL) {
+            xmlNodePtr root = xmlDocGetRootElement(doc);
+            if (root != NULL) {
+                xmlNodePtr cur = root->children;
+                while (cur != NULL) {
+                    if (xmlStrcmp(cur->name, (const xmlChar*)"underline_factor") == 0) {
+                        xmlChar *value = xmlNodeGetContent(cur);
+                        if (value) {
+                            thicknessFactor = static_cast<float>(atof((const char*)value));
+                            // Use parsed value in environment variable
+                            setenv("FONT_UNDERLINE_FACTOR", (const char*)value, 1);
+                            xmlFree(value);
+                        }
+                    }
+                    cur = cur->next;
+                }
+            }
+            xmlFreeDoc(doc);
+        }
+        
         // Return a fixed thickness if font is a bitmap font
         if (!FT_IS_SCALABLE(face))
-            return static_cast<float>(characterSize) / 14.f;
+            return static_cast<float>(characterSize) / thicknessFactor;
 
         return static_cast<float>(FT_MulFix(face->underline_thickness, face->size->metrics.y_scale)) / float{1 << 6};
     }

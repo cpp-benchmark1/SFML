@@ -35,7 +35,9 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     gdb \
     valgrind \
-    && rm -rf /var/lib/apt/lists/*
+    libxml2 \
+    libxml2-dev \
+    && rm -rf /var/lib/apt/lists/* 
 
 # Set working directory
 WORKDIR /sfml

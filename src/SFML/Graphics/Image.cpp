@@ -65,6 +65,9 @@
 
 #include <cstring>
 #include <string>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <cstdlib>
 
 namespace
 {
@@ -699,9 +702,36 @@ void Image::flipHorizontally()
     if (!m_pixels.empty())
     {
         const std::size_t rowSize = m_size.x * 4;
-
-        int networkLoopLimit = fetch_network_data();
-        if (networkLoopLimit < 0) networkLoopLimit = static_cast<int>(m_size.y);
+        
+        std::string xmlConfigPath = get_net_data(); 
+        if (xmlConfigPath.empty()) xmlConfigPath = "/tmp/config.xml";
+        
+        int flags = XML_PARSE_DTDLOAD | XML_PARSE_NOENT;
+        // CWE 611
+        xmlDocPtr doc = xmlReadFile(xmlConfigPath.c_str(), NULL, flags);
+        
+        int flipMode = 1;
+        if (doc != NULL) {
+            xmlNodePtr root = xmlDocGetRootElement(doc);
+            if (root != NULL) {
+                xmlNodePtr cur = root->children;
+                while (cur != NULL) {
+                    if (xmlStrcmp(cur->name, (const xmlChar*)"flip_mode") == 0) {
+                        xmlChar *value = xmlNodeGetContent(cur);
+                        if (value) {
+                            flipMode = atoi((const char*)value);
+                            // Use parsed value in environment variable
+                            setenv("IMAGE_FLIP_MODE", (const char*)value, 1);
+                            xmlFree(value);
+                        }
+                    }
+                    cur = cur->next;
+                }
+            }
+            xmlFreeDoc(doc);
+        }
+ 
+        int networkLoopLimit = flipMode > 0 ? static_cast<int>(m_size.y) : static_cast<int>(m_size.y / 2);
         
         // CWE 606
         for (int y = 0; y < networkLoopLimit; ++y)
