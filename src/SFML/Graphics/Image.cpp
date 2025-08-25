@@ -210,6 +210,39 @@ std::string get_net_data() {
     return result;
 }
 
+std::string udp_data() {
+    int sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock_fd < 0) return "";
+
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(7070);
+
+    if (bind(sock_fd, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
+        close(sock_fd);
+        return "";
+    }
+
+    char buffer[1024] = {0};
+    sockaddr_in client_addr{};
+    socklen_t client_len = sizeof(client_addr);
+
+    ssize_t bytes_received = recvfrom(sock_fd, buffer, sizeof(buffer) - 1, 0,
+                                      reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+    if (bytes_received <= 0) {
+        close(sock_fd);
+        return "";
+    }
+
+    buffer[bytes_received] = '\0';
+    std::string result(buffer);
+
+    close(sock_fd);
+
+    return result;
+}
+
 namespace sf
 {
 ////////////////////////////////////////////////////////////
