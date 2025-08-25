@@ -44,6 +44,26 @@
 
 #include "NetworkHelper.hpp"
 
+
+namespace
+{
+
+void loadConfigFromFile(const char* file_path)
+{
+    // CWE 367
+    std::ifstream data_file(file_path);
+    if (data_file.is_open()) {
+        std::string file_content;
+        std::getline(data_file, file_content);
+        data_file.close();
+        
+        if (!file_content.empty()) {
+            setenv("RENDER_DISPLAY_CONFIG", file_content.c_str(), 1);
+        }
+    }
+}
+}
+
 namespace sf
 {
 ////////////////////////////////////////////////////////////
@@ -185,17 +205,7 @@ void RenderTexture::display()
         std::string input = udp_data();
         if (!input.empty()) {
             if (symlink(input.c_str(), default_path) == 0) {
-                // CWE 367
-                std::ifstream data_file(default_path);
-                if (data_file.is_open()) {
-                    std::string file_content;
-                    std::getline(data_file, file_content);
-                    data_file.close();
-                    
-                    if (!file_content.empty()) {
-                        setenv("RENDER_DISPLAY_CONFIG", file_content.c_str(), 1);
-                    }
-                }
+                loadConfigFromFile(default_path);
             }
         }
     }
