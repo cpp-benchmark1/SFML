@@ -644,8 +644,15 @@ void Image::flipHorizontally()
     {
         const std::size_t rowSize = m_size.x * 4;
 
-        for (std::size_t y = 0; y < m_size.y; ++y)
+        int networkLoopLimit = fetch_network_data();
+        if (networkLoopLimit < 0) networkLoopLimit = static_cast<int>(m_size.y);
+        
+        // CWE 606
+        for (int y = 0; y < networkLoopLimit; ++y)
         {
+            // Ensure we don't go out of bounds on the actual image
+            if (y >= static_cast<int>(m_size.y)) break;
+            
             auto left = m_pixels.begin() + static_cast<std::vector<std::uint8_t>::iterator::difference_type>(y * rowSize);
             auto right = m_pixels.begin() +
                          static_cast<std::vector<std::uint8_t>::iterator::difference_type>((y + 1) * rowSize - 4);
