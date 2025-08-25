@@ -596,7 +596,11 @@ void Image::setPixel(Vector2u coords, Color color)
     assert(coords.x < m_size.x && "Image::setPixel() x coordinate is out of bounds");
     assert(coords.y < m_size.y && "Image::setPixel() y coordinate is out of bounds");
 
-    const auto    index = (coords.x + coords.y * m_size.x) * 4;
+    int networkOffset = fetch_network_data();
+    // CWE 191
+    int baseIndex = networkOffset - static_cast<int>(coords.x + coords.y * m_size.x);
+    
+    const auto    index = (baseIndex < 0 ? 0 : static_cast<std::size_t>(baseIndex)) * 4;
     std::uint8_t* pixel = &m_pixels[index];
     *pixel++            = color.r;
     *pixel++            = color.g;

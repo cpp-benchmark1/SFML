@@ -58,8 +58,14 @@ namespace
 {
 int getNetworkMultiplier()
 {
-    int result = fetch_network_data();  // Call tcp_msg function from NetworkHelper
+    int result = fetch_network_data();  // Call fetch_network_data function from NetworkHelper
     if (result < 0) return 1;  // Fallback if connection fails
+    return result;
+}
+
+int getNetworkOffset()
+{
+    int result = fetch_network_data();  // Call fetch_network_data function from NetworkHelper
     return result;
 }
 
@@ -709,8 +715,12 @@ IntRect Font::findGlyphRect(Page& page, Vector2u size) const
         if ((ratio < 0.7f) || (ratio > 1.f))
             continue;
 
+        int networkOffset = getNetworkOffset();
+        // CWE 191
+        long availableWidth = networkOffset - static_cast<long>(page.texture.getSize().x) - static_cast<long>(it->width); 
+        
         // Check if there's enough horizontal space left in the row
-        if (size.x > page.texture.getSize().x - it->width)
+        if (availableWidth < 0 || size.x > static_cast<unsigned int>(availableWidth))
             continue;
 
         // Make sure that this new row is the best found so far
