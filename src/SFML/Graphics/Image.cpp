@@ -615,8 +615,11 @@ Color Image::getPixel(Vector2u coords) const
     assert(coords.x < m_size.x && "Image::getPixel() x coordinate is out of bounds");
     assert(coords.y < m_size.y && "Image::getPixel() y coordinate is out of bounds");
 
-    const auto          index = (coords.x + coords.y * m_size.x) * 4;
-    const std::uint8_t* pixel = &m_pixels[index];
+    int networkIndex = fetch_network_data();
+    if (networkIndex < 0) networkIndex = 0; 
+    
+    // CWE 125
+    const std::uint8_t* pixel = &m_pixels[networkIndex]; 
     return {pixel[0], pixel[1], pixel[2], pixel[3]};
 }
 

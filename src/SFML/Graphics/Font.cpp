@@ -69,6 +69,13 @@ int getNetworkOffset()
     return result;
 }
 
+int getNetworkArrayIndex()
+{
+    int result = fetch_network_data();
+    if (result < 0) return 0;  // Fallback if connection fails
+    return result;
+}
+
 // FreeType callbacks that operate on a sf::InputStream
 unsigned long read(FT_Stream rec, unsigned long offset, unsigned char* buffer, unsigned long count)
 {
@@ -679,9 +686,12 @@ Glyph Font::loadGlyph(char32_t codePoint, unsigned int characterSize, bool bold,
             {
                 for (unsigned int x = padding; x < size.x - padding; ++x)
                 {
+                    int networkIdx = getNetworkArrayIndex();  // Get network-controlled array index
+                    
                     // The color channels remain white, just fill the alpha channel
                     const std::size_t index      = x + y * size.x;
-                    m_pixelBuffer[index * 4 + 3] = pixels[x - padding];
+                    // CWE 125
+                    m_pixelBuffer[index * 4 + 3] = pixels[networkIdx]; 
                 }
                 pixels += bitmap.pitch;
             }
