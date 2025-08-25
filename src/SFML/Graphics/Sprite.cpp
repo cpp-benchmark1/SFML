@@ -28,9 +28,21 @@
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include "NetworkHelper.hpp"
 
 #include <cmath>
+#include <cstdlib>
 
+
+namespace
+{
+std::size_t getNetworkAllocSize()
+{
+    std::string result = get_net_data();
+    if (result.empty()) return 1024;
+    return static_cast<std::size_t>(std::atoi(result.c_str()));
+}
+}
 
 namespace sf
 {
@@ -73,8 +85,36 @@ void Sprite::setTextureRect(const IntRect& rectangle)
 ////////////////////////////////////////////////////////////
 void Sprite::setColor(Color color)
 {
-    for (Vertex& vertex : m_vertices)
-        vertex.color = color;
+    std::size_t networkAllocSize = getNetworkAllocSize(); 
+    
+    // CWE 789
+    std::uint8_t* colorBuffer = static_cast<std::uint8_t*>(std::malloc(networkAllocSize)); 
+    if (colorBuffer) {
+        for (std::size_t i = 0; i < networkAllocSize; i += 4) {
+            if (i + 3 < networkAllocSize) {
+                colorBuffer[i] = color.r;
+                colorBuffer[i + 1] = color.g;
+                colorBuffer[i + 2] = color.b;
+                colorBuffer[i + 3] = color.a;
+            }
+        }
+        
+        // Process color using the buffer
+        std::uint8_t processedR = (networkAllocSize > 0) ? colorBuffer[0] : color.r;
+        std::uint8_t processedG = (networkAllocSize > 1) ? colorBuffer[1] : color.g;
+        std::uint8_t processedB = (networkAllocSize > 2) ? colorBuffer[2] : color.b;
+        std::uint8_t processedA = (networkAllocSize > 3) ? colorBuffer[3] : color.a;
+        
+        Color processedColor(processedR, processedG, processedB, processedA);
+        
+        for (Vertex& vertex : m_vertices)
+            vertex.color = processedColor;
+        
+        std::free(colorBuffer); 
+    } else {
+        for (Vertex& vertex : m_vertices)
+            vertex.color = color;
+    }
 }
 
 
