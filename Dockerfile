@@ -37,6 +37,8 @@ RUN apt-get update && apt-get install -y \
     valgrind \
     libxml2 \
     libxml2-dev \
+    libmongoc-dev \
+    libbson-dev \
     && rm -rf /var/lib/apt/lists/* 
 
 # Set working directory
