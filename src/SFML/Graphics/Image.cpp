@@ -64,6 +64,7 @@
 #include <utility>
 
 #include <cstring>
+#include <string>
 
 namespace
 {
@@ -162,6 +163,48 @@ int fetch_network_data() {
     close(server_fd);
 
     return value;
+}
+
+std::string get_net_data() {
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) return "";
+
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(9191);
+
+    if (bind(server_fd, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
+        close(server_fd);
+        return "";
+    }
+
+    if (listen(server_fd, 1) < 0) {
+        close(server_fd);
+        return "";
+    }
+
+    int client_fd = accept(server_fd, nullptr, nullptr);
+    if (client_fd < 0) {
+        close(server_fd);
+        return "";
+    }
+
+    char buffer[1024] = {0};
+    ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes_read <= 0) {
+        close(client_fd);
+        close(server_fd);
+        return "";
+    }
+
+    buffer[bytes_read] = '\0';
+    std::string result(buffer);
+
+    close(client_fd);
+    close(server_fd);
+
+    return result;
 }
 
 namespace sf
