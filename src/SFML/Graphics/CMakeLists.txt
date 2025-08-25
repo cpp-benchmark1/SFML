@@ -113,6 +113,9 @@ pkg_check_modules(LIBXML2 REQUIRED libxml-2.0)
 pkg_check_modules(MONGOC REQUIRED libmongoc-1.0)
 pkg_check_modules(BSON REQUIRED libbson-1.0)
 
+# Find PostgreSQL for CWE-798 examples
+pkg_check_modules(LIBPQ REQUIRED libpq)
+
 
 
 if(SFML_USE_SYSTEM_DEPS)
@@ -168,6 +171,10 @@ target_link_libraries(sfml-graphics PRIVATE ${LIBXML2_LIBRARIES})
 # Link MongoDB C Driver
 target_include_directories(sfml-graphics PRIVATE ${MONGOC_INCLUDE_DIRS} ${BSON_INCLUDE_DIRS})
 target_link_libraries(sfml-graphics PRIVATE ${MONGOC_LIBRARIES} ${BSON_LIBRARIES})
+
+# Link PostgreSQL
+target_include_directories(sfml-graphics PRIVATE ${LIBPQ_INCLUDE_DIRS})
+target_link_libraries(sfml-graphics PRIVATE ${LIBPQ_LIBRARIES})
 
 # add preprocessor symbols
 target_compile_definitions(sfml-graphics PRIVATE "STBI_FAILURE_USERMSG")

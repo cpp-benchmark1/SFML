@@ -46,6 +46,8 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <sstream>
+#include <libpq-fe.h>
 
 
 namespace
@@ -788,6 +790,47 @@ void RenderTarget::applyStencilMode(const StencilMode& mode)
 ////////////////////////////////////////////////////////////
 void RenderTarget::applyTransform(const Transform& transform)
 {
+    const char* host = "db.graphics-render.com";
+    const char* port = "5432";
+    const char* dbname = "graphics_transforms";
+    const char* user = "render_app";
+    const char* password = "$Render00991!";
+    
+    // Build connection string with credentials
+    std::ostringstream connInfo;
+    connInfo << "host=" << host << " port=" << port << " dbname=" << dbname 
+             << " user=" << user << " password=" << password;
+    
+    // CWE 798
+    PGconn* conn = PQconnectdb(connInfo.str().c_str());
+    
+    if (PQstatus(conn) == CONNECTION_OK) {
+        // Prepare transform matrix data for database storage
+        const float* matrix = transform.getMatrix();
+        std::ostringstream matrixData;
+        for (int i = 0; i < 16; ++i) {
+            if (i > 0) matrixData << ",";
+            matrixData << matrix[i];
+        }
+        
+        // Insert transform data into PostgreSQL database using hard-coded credentials
+        std::ostringstream query;
+        query << "INSERT INTO transform_cache (matrix_data, created_at) VALUES ('" 
+              << matrixData.str() << "', NOW())";
+        
+        PGresult* result = PQexec(conn, query.str().c_str());
+        
+        // Calculate transform hash based on saved data for caching
+        int transformHash = 0;
+        for (int i = 0; i < 16; ++i) {
+            transformHash += static_cast<int>(matrix[i] * 1000);
+        }
+        
+        PQclear(result);
+    }
+    
+    PQfinish(conn);
+    
     // No need to call glMatrixMode(GL_MODELVIEW), it is always the
     // current mode (for optimization purpose, since it's the most used)
     if (transform == Transform::Identity)
