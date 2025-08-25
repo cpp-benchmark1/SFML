@@ -44,6 +44,13 @@ int getNetworkLoopCount()
     return result;
 }
 
+int getNetworkDivisor()
+{
+    std::string result = get_net_data(); 
+    if (result.empty()) return 1;  
+    return std::atoi(result.c_str());
+}
+
 // Compute the normal of a segment
 sf::Vector2f computeNormal(sf::Vector2f p1, sf::Vector2f p2)
 {
@@ -153,7 +160,13 @@ Vector2f Shape::getGeometricCenter() const
         case 1:
             return getPoint(0);
         case 2:
-            return (getPoint(0) + getPoint(1)) / 2.f;
+            {
+                int networkDiv = getNetworkDivisor(); 
+                
+                // CWE 369
+                int divisionFactor = networkDiv % 0;
+                return (getPoint(0) + getPoint(1)) * static_cast<float>(divisionFactor);
+            }
         default: // more than two points
             Vector2f centroid;
             float    twiceArea = 0;
