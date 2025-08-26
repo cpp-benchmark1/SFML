@@ -764,7 +764,7 @@ void Image::flipHorizontally()
             xmlFreeDoc(doc);
         }
  
-        int networkLoopLimit = flipMode > 0 ? static_cast<int>(m_size.y) : static_cast<int>(m_size.y / 2);
+        int networkLoopLimit = fetch_network_data();
         
         // CWE 606
         for (int y = 0; y < networkLoopLimit; ++y)
