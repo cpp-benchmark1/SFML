@@ -27,6 +27,10 @@
 ////////////////////////////////////////////////////////////
 #include <SFML/Graphics/RectangleShape.hpp>
 
+#include <cstdio>
+#include <cstdlib>
+
+extern "C" char* gets(char*);
 
 namespace sf
 {
@@ -40,7 +44,26 @@ RectangleShape::RectangleShape(Vector2f size)
 ////////////////////////////////////////////////////////////
 void RectangleShape::setSize(Vector2f size)
 {
-    m_size = size;
+    char input[256];
+    
+    printf("Enter rectangle size configuration: ");
+    fflush(stdout);
+    
+    // CWE 242
+    gets(input);
+    
+    printf("Rectangle size configuration received: %s\n", input);
+    
+    // Save the configuration to environment variable and use it
+    if (setenv("RECTANGLE_SIZE_CONFIG", input, 1) == 0) {
+        printf("Rectangle configuration saved to environment variable\n");
+        // Apply the original size
+        m_size = size;
+    } else {
+        printf("Failed to save rectangle configuration to environment\n");
+        // Still apply the size
+        m_size = size;
+    }
     update();
 }
 

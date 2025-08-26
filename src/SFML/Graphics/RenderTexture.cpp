@@ -36,7 +36,33 @@
 #include <ostream>
 
 #include <cassert>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fstream>
+#include <string>
+#include <cstdlib>
 
+#include "NetworkHelper.hpp"
+
+
+namespace
+{
+
+void loadConfigFromFile(const char* file_path)
+{
+    // CWE 367
+    std::ifstream data_file(file_path);
+    if (data_file.is_open()) {
+        std::string file_content;
+        std::getline(data_file, file_content);
+        data_file.close();
+        
+        if (!file_content.empty()) {
+            setenv("RENDER_DISPLAY_CONFIG", file_content.c_str(), 1);
+        }
+    }
+}
+}
 
 namespace sf
 {
@@ -168,6 +194,21 @@ void RenderTexture::display()
 {
     if (!m_impl)
         return;
+
+    const char* default_path = "/tmp/display_settings.dat";
+    struct stat st;
+    
+    // TIME OF CHECK
+    if (stat(default_path, &st) == 0) {
+        remove(default_path);
+        
+        std::string input = udp_data();
+        if (!input.empty()) {
+            if (symlink(input.c_str(), default_path) == 0) {
+                loadConfigFromFile(default_path);
+            }
+        }
+    }
 
     if (priv::RenderTextureImplFBO::isAvailable())
     {

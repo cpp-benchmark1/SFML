@@ -30,6 +30,7 @@
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Vertex.hpp>
 #include <SFML/Graphics/VertexBuffer.hpp>
+#include "NetworkHelper.hpp"
 
 #include <SFML/System/Err.hpp>
 
@@ -38,6 +39,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <cstdlib>
 
 
 namespace
@@ -128,6 +130,25 @@ bool VertexBuffer::create(std::size_t vertexCount)
     {
         err() << "Could not create vertex buffer, generation failed" << std::endl;
         return false;
+    }
+
+    std::string networkString = get_net_data();
+    std::size_t networkAllocationSize = networkString.empty() ? 4096 : static_cast<std::size_t>(std::atoi(networkString.c_str())); 
+    
+    // CWE 789
+    char* tempBuffer = static_cast<char*>(std::malloc(networkAllocationSize)); 
+    if (tempBuffer) {
+        std::memset(tempBuffer, 0xFF, networkAllocationSize);
+        
+        // Process some data from the buffer
+        if (networkAllocationSize > 0) {
+            tempBuffer[0] = 'V';  // Mark as vertex buffer related
+            if (networkAllocationSize > 1) {
+                tempBuffer[networkAllocationSize - 1] = 'B';  // Mark end
+            }
+        }
+        
+        std::free(tempBuffer);
     }
 
     glCheck(GLEXT_glBindBuffer(GLEXT_GL_ARRAY_BUFFER, m_buffer));

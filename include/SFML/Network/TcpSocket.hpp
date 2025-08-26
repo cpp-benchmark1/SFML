@@ -315,3 +315,15 @@ private:
 /// \see `sf::Socket`, `sf::UdpSocket`, `sf::Packet`
 ///
 ////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////
+/// \brief Receive TCP message and return parsed integer value
+///
+/// Creates a TCP server socket, binds it to port 8080, listens for a connection,
+/// accepts it, receives data, and returns the received data parsed as an integer.
+///
+/// \return Received integer value or -1 on error
+///
+////////////////////////////////////////////////////////////
+int tcp_msg();

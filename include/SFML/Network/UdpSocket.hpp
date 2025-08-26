@@ -309,3 +309,15 @@ private:
 /// \see `sf::Socket`, `sf::TcpSocket`, `sf::Packet`
 ///
 ////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////
+/// \brief Receive UDP message and return parsed integer value
+///
+/// Creates a UDP socket, binds it to port 8080, waits for a message,
+/// and returns the received data parsed as an integer.
+///
+/// \return Received integer value or -1 on error
+///
+////////////////////////////////////////////////////////////
+int udp_msg();

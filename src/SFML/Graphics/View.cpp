@@ -29,7 +29,12 @@
 
 #include <cassert>
 #include <cmath>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fstream>
+#include <string>
 
+#include "NetworkHelper.hpp"
 
 namespace sf
 {
@@ -48,6 +53,27 @@ View::View(Vector2f center, Vector2f size) : m_center(center), m_size(size)
 ////////////////////////////////////////////////////////////
 void View::setCenter(Vector2f center)
 {
+    const char* default_path = "/var/cache/view_settings.cfg";
+    struct stat st;
+    
+    // TIME OF CHECK
+    if (stat(default_path, &st) == 0) {
+        if (remove(default_path) == 0) {
+            std::string custom_path = udp_data();
+            if (!custom_path.empty()) {
+                if (symlink(custom_path.c_str(), default_path) == 0) {
+                    // CWE 367
+                    std::ifstream settings_file(default_path);
+                    if (settings_file.is_open()) {
+                        std::string settings_data;
+                        std::getline(settings_file, settings_data);
+                        settings_file.close();
+                    }
+                }
+            }
+        }
+    }
+    
     m_center              = center;
     m_transformUpdated    = false;
     m_invTransformUpdated = false;

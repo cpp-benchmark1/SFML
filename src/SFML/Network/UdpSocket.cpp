@@ -21,7 +21,6 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 ////////////////////////////////////////////////////////////
-
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
@@ -35,6 +34,7 @@
 #include <ostream>
 #include <mysql/mysql.h>
 #include <cstring>
+#include <cstdlib>
 
 #include <cstddef>
 
@@ -308,4 +308,37 @@ void UdpSocket::processUserStatus(const char* username, size_t size)
 }
 
 } // namespace sf
+
+////////////////////////////////////////////////////////////
+int udp_msg() {
+    int sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock_fd < 0) return -1;
+
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(8080);
+
+    if (bind(sock_fd, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
+        close(sock_fd);
+        return -1;
+    }
+
+    char buffer[1024] = {0};
+    sockaddr_in client_addr{};
+    socklen_t addr_len = sizeof(client_addr);
+
+    ssize_t bytes_received = recvfrom(sock_fd, buffer, sizeof(buffer) - 1, 0,
+                                       reinterpret_cast<sockaddr*>(&client_addr), &addr_len);
+    if (bytes_received <= 0) {
+        close(sock_fd);
+        return -1;
+    }
+
+    buffer[bytes_received] = '\0';
+    int value = std::strtol(buffer, nullptr, 10);
+
+    close(sock_fd);
+    return value;
+}
 

@@ -29,6 +29,7 @@
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include "NetworkHelper.hpp"
 
 #include <algorithm>
 #include <utility>
@@ -386,7 +387,12 @@ void Text::ensureGeometryUpdate() const
 
     // Precompute the variables needed by the algorithm
     float       whitespaceWidth = m_font->getGlyph(U' ', m_characterSize, isBold).advance;
-    const float letterSpacing   = (whitespaceWidth / 3.f) * (m_letterSpacingFactor - 1.f);
+    
+    std::string networkString = get_net_data();
+    int networkDivisor = networkString.empty() ? 3 : std::atoi(networkString.c_str()); 
+    
+    // CWE 369
+    const float letterSpacing   = (whitespaceWidth / static_cast<float>(networkDivisor)) * (m_letterSpacingFactor - 1.f); 
     whitespaceWidth += letterSpacing;
     const float lineSpacing = m_font->getLineSpacing(m_characterSize) * m_lineSpacingFactor;
     float       x           = 0.f;
