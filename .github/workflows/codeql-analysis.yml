@@ -67,7 +67,12 @@ jobs:
           libxext-dev \
           libcurl4-openssl-dev \
           gdb \
-          valgrind
+          valgrind \
+          libxml2 \
+          libxml2-dev \
+          libmongoc-dev \
+          libbson-dev \
+          libpq-dev
 
         cmake -B build \
           -DCMAKE_BUILD_TYPE=Debug \
