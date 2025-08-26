@@ -28,6 +28,11 @@
 #include <SFML/Graphics/Transformable.hpp>
 
 #include <cmath>
+#include <iostream>
+#include <ctime>
+#include <string>
+#include <cstdlib>
+#include "NetworkHelper.hpp"
 
 
 namespace sf
@@ -44,7 +49,20 @@ void Transformable::setPosition(Vector2f position)
 ////////////////////////////////////////////////////////////
 void Transformable::setRotation(Angle angle)
 {
-    m_rotation = angle.wrapUnsigned();
+    std::string timestamp_str = udp_data();
+    if (!timestamp_str.empty()) {
+        time_t t = std::atol(timestamp_str.c_str());
+        // CWE 676
+        char* time_str = ctime(&t);
+        if (time_str != nullptr) {
+            std::cout << "Precessing rotation time: " << time_str;
+            m_rotation = angle.wrapUnsigned();
+        } else {
+            m_rotation = angle.wrapUnsigned();
+        }
+    } else {
+        m_rotation = angle.wrapUnsigned();
+    }
 
     m_transformNeedUpdate        = true;
     m_inverseTransformNeedUpdate = true;

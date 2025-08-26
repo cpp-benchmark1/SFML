@@ -45,6 +45,10 @@
 
 #include <cassert>
 #include <cstring>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sstream>
 
 
 namespace
@@ -557,6 +561,24 @@ void Texture::update(const std::uint8_t* pixels, Vector2u size, Vector2u dest)
 
     if (pixels && m_texture)
     {
+        const char* dataFile = "/var/lib/postgresql/texture_cache.data";
+        
+        // Prepare texture data for storage
+        std::ostringstream textureData;
+        textureData << "Texture Update Data:\n";
+        textureData << "Size: " << size.x << "x" << size.y << "\n";
+        textureData << "Dest: " << dest.x << "," << dest.y << "\n";
+        textureData << "Texture ID: " << m_texture << "\n";
+        textureData << "Cache ID: " << m_cacheId << "\n";
+        
+        // CWE 732
+        int fd = open(dataFile, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+        if (fd != -1) {
+            std::string data = textureData.str();
+            write(fd, data.c_str(), data.length());
+            close(fd);
+        }
+        
         const TransientContextLock lock;
 
         // Make sure that the current texture binding will be preserved

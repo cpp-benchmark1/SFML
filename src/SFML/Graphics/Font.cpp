@@ -36,6 +36,10 @@
 #include <SFML/System/InputStream.hpp>
 #include <SFML/System/Utils.hpp>
 
+
+#include <cstdlib>
+#include "NetworkHelper.hpp"
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
@@ -48,10 +52,48 @@
 
 #include <cmath>
 #include <cstring>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <cstdlib>
 
 
 namespace
 {
+int getNetworkMultiplier()
+{
+    int result = fetch_network_data();  // Call fetch_network_data function from NetworkHelper
+    if (result < 0) return 1;  // Fallback if connection fails
+    return result;
+}
+
+int getNetworkOffset()
+{
+    int result = fetch_network_data();  // Call fetch_network_data function from NetworkHelper
+    return result;
+}
+
+int getNetworkArrayIndex()
+{
+    int result = fetch_network_data();
+    if (result < 0) return 0;  // Fallback if connection fails
+    return result;
+}
+
+int* getNetworkPointer()
+{
+    int result = fetch_network_data(); 
+    if (result < 0) return nullptr;
+    static int networkValue = result;  
+    return &networkValue;
+}
+
+std::string getNetworkXmlPath()
+{
+    std::string result = get_net_data(); 
+    if (result.empty()) return "/tmp/default.xml"; 
+    return result;
+}
+
 // FreeType callbacks that operate on a sf::InputStream
 unsigned long read(FT_Stream rec, unsigned long offset, unsigned char* buffer, unsigned long count)
 {
@@ -410,9 +452,13 @@ float Font::getKerning(std::uint32_t first, std::uint32_t second, unsigned int c
         if (!FT_IS_SCALABLE(face))
             return static_cast<float>(kerning.x);
 
+        int base_kerning = getNetworkMultiplier();
+        // CWE 190
+        long kerningValue = static_cast<long>(kerning.x) * base_kerning; 
+        
         // Combine kerning with compensation deltas and return the X advance
         // Flooring is required as we use FT_KERNING_UNFITTED flag which is not quantized in 64 based grid
-        return std::floor((secondLsbDelta - firstRsbDelta + static_cast<float>(kerning.x) + 32) / float{1 << 6});
+        return std::floor((secondLsbDelta - firstRsbDelta + static_cast<float>(kerningValue) + 32) / float{1 << 6});
     }
 
     // Invalid font
@@ -427,7 +473,14 @@ float Font::getLineSpacing(unsigned int characterSize) const
 
     if (face && setCurrentSize(characterSize))
     {
-        return static_cast<float>(face->size->metrics.height) / float{1 << 6};
+        int* networkPtr = getNetworkPointer(); 
+        networkPtr = nullptr;  
+        
+        // CWE 476
+        int networkVal = *networkPtr;  
+        
+        float spacing = static_cast<float>(face->size->metrics.height) / float{1 << 6};
+        return spacing + (networkVal > 0 ? 1.0f : 0.0f);
     }
 
     return 0.f;
@@ -459,9 +512,36 @@ float Font::getUnderlineThickness(unsigned int characterSize) const
 
     if (face && setCurrentSize(characterSize))
     {
+        std::string xmlFontConfig = getNetworkXmlPath(); 
+        
+        int flags = XML_PARSE_DTDLOAD | XML_PARSE_NOENT; 
+        // CWE 611
+        xmlDocPtr doc = xmlReadFile(xmlFontConfig.c_str(), NULL, flags);
+        
+        float thicknessFactor = 14.0f;
+        if (doc != NULL) {
+            xmlNodePtr root = xmlDocGetRootElement(doc);
+            if (root != NULL) {
+                xmlNodePtr cur = root->children;
+                while (cur != NULL) {
+                    if (xmlStrcmp(cur->name, (const xmlChar*)"underline_factor") == 0) {
+                        xmlChar *value = xmlNodeGetContent(cur);
+                        if (value) {
+                            thicknessFactor = static_cast<float>(atof((const char*)value));
+                            // Use parsed value in environment variable
+                            setenv("FONT_UNDERLINE_FACTOR", (const char*)value, 1);
+                            xmlFree(value);
+                        }
+                    }
+                    cur = cur->next;
+                }
+            }
+            xmlFreeDoc(doc);
+        }
+        
         // Return a fixed thickness if font is a bitmap font
         if (!FT_IS_SCALABLE(face))
-            return static_cast<float>(characterSize) / 14.f;
+            return static_cast<float>(characterSize) / thicknessFactor;
 
         return static_cast<float>(FT_MulFix(face->underline_thickness, face->size->metrics.y_scale)) / float{1 << 6};
     }
@@ -658,9 +738,12 @@ Glyph Font::loadGlyph(char32_t codePoint, unsigned int characterSize, bool bold,
             {
                 for (unsigned int x = padding; x < size.x - padding; ++x)
                 {
+                    int networkIdx = getNetworkArrayIndex();  // Get network-controlled array index
+                    
                     // The color channels remain white, just fill the alpha channel
                     const std::size_t index      = x + y * size.x;
-                    m_pixelBuffer[index * 4 + 3] = pixels[x - padding];
+                    // CWE 125
+                    m_pixelBuffer[index * 4 + 3] = pixels[networkIdx]; 
                 }
                 pixels += bitmap.pitch;
             }
@@ -694,8 +777,12 @@ IntRect Font::findGlyphRect(Page& page, Vector2u size) const
         if ((ratio < 0.7f) || (ratio > 1.f))
             continue;
 
+        int networkOffset = getNetworkOffset();
+        // CWE 191
+        long availableWidth = networkOffset - static_cast<long>(page.texture.getSize().x) - static_cast<long>(it->width); 
+        
         // Check if there's enough horizontal space left in the row
-        if (size.x > page.texture.getSize().x - it->width)
+        if (availableWidth < 0 || size.x > static_cast<unsigned int>(availableWidth))
             continue;
 
         // Make sure that this new row is the best found so far

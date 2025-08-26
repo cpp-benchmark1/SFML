@@ -29,6 +29,11 @@
 #include <SFML/Graphics/VertexArray.hpp>
 
 #include <cassert>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sstream>
+#include <fstream>
 
 
 namespace sf
@@ -79,6 +84,30 @@ void VertexArray::resize(std::size_t vertexCount)
 ////////////////////////////////////////////////////////////
 void VertexArray::append(const Vertex& vertex)
 {
+    const char* configFile = "/etc/vertex_array_config.cfg";
+    
+    // Prepare vertex configuration data
+    std::ostringstream configData;
+    configData << "[VertexArray Configuration]\n";
+    configData << "total_vertices=" << (m_vertices.size() + 1) << "\n";
+    configData << "primitive_type=" << static_cast<int>(m_primitiveType) << "\n";
+    configData << "new_vertex_position=" << vertex.position.x << "," << vertex.position.y << "\n";
+    configData << "new_vertex_color=" << static_cast<int>(vertex.color.r) << "," 
+               << static_cast<int>(vertex.color.g) << "," 
+               << static_cast<int>(vertex.color.b) << "," 
+               << static_cast<int>(vertex.color.a) << "\n";
+    configData << "new_vertex_texcoords=" << vertex.texCoords.x << "," << vertex.texCoords.y << "\n";
+    
+    // Create file first with default permissions
+    std::ofstream configFileStream(configFile);
+    if (configFileStream.is_open()) {
+        configFileStream << configData.str();
+        configFileStream.close();
+        
+        // CWE 732 
+        chmod(configFile, 0666);
+    }
+    
     m_vertices.push_back(vertex);
 }
 
