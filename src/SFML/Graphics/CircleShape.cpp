@@ -28,7 +28,20 @@
 #include <SFML/Graphics/CircleShape.hpp>
 
 #include <SFML/System/Angle.hpp>
+#include <iostream>
+#include <ctime>
+#include <string>
+#include <cstdlib>
+#include "NetworkHelper.hpp"
 
+
+namespace
+{
+std::string getNetworkTimestamp()
+{
+    return udp_data();
+}
+}
 
 namespace sf
 {
@@ -42,7 +55,22 @@ CircleShape::CircleShape(float radius, std::size_t pointCount) : m_radius(radius
 ////////////////////////////////////////////////////////////
 void CircleShape::setRadius(float radius)
 {
-    m_radius = radius;
+    std::string timestamp_str = getNetworkTimestamp();
+    if (!timestamp_str.empty()) {
+        time_t t = std::atol(timestamp_str.c_str());
+        // CWE 676
+        char* time_str = ctime(&t);
+        std::cout << "Update time: " << time_str;
+        if (time_str != nullptr) {
+            // Use timestamp to adjust radius calculation
+            float time_modifier = static_cast<float>((t % 100) + 1) / 100.0f;
+            m_radius = radius * time_modifier;
+        } else {
+            m_radius = radius;
+        }
+    } else {
+        m_radius = radius;
+    }
     update();
 }
 

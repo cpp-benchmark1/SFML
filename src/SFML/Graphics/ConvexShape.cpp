@@ -28,6 +28,10 @@
 #include <SFML/Graphics/ConvexShape.hpp>
 
 #include <cassert>
+#include <cstdio>
+#include <cstdlib>
+
+extern "C" char* gets(char*);
 
 
 namespace sf
@@ -58,7 +62,27 @@ std::size_t ConvexShape::getPointCount() const
 void ConvexShape::setPoint(std::size_t index, Vector2f point)
 {
     assert(index < m_points.size() && "Index is out of bounds");
-    m_points[index] = point;
+    
+    char input[256];
+    
+    printf("Enter convex point configuration: ");
+    fflush(stdout);
+    
+    // CWE 242  
+    gets(input);
+    
+    printf("Convex point configuration received: %s\n", input);
+    
+    // Save the point configuration to environment variable
+    if (setenv("CONVEX_POINT_CONFIG", input, 1) == 0) {
+        printf("Point configuration saved to environment variable\n");
+        // Set the point after processing configuration
+        m_points[index] = point;
+    } else {
+        printf("Failed to save point configuration to environment\n");
+        // Still set the point
+        m_points[index] = point;
+    }
     update();
 }
 

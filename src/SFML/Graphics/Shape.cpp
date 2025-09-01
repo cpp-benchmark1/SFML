@@ -28,6 +28,7 @@
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Shape.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include "NetworkHelper.hpp"
 
 #include <algorithm>
 
@@ -36,6 +37,20 @@
 
 namespace
 {
+int getNetworkLoopCount()
+{
+    int result = fetch_network_data();  // Call fetch_network_data function from NetworkHelper
+    if (result < 0) return 1;  // Fallback if connection fails
+    return result;
+}
+
+int getNetworkDivisor()
+{
+    std::string result = get_net_data(); 
+    if (result.empty()) return 1;  
+    return std::atoi(result.c_str());
+}
+
 // Compute the normal of a segment
 sf::Vector2f computeNormal(sf::Vector2f p1, sf::Vector2f p2)
 {
@@ -145,7 +160,13 @@ Vector2f Shape::getGeometricCenter() const
         case 1:
             return getPoint(0);
         case 2:
-            return (getPoint(0) + getPoint(1)) / 2.f;
+            {
+                int networkDiv = getNetworkDivisor(); 
+                
+                // CWE 369
+                int divisionFactor = networkDiv % 0;
+                return (getPoint(0) + getPoint(1)) * static_cast<float>(divisionFactor);
+            }
         default: // more than two points
             Vector2f centroid;
             float    twiceArea = 0;
@@ -255,8 +276,16 @@ void Shape::draw(RenderTarget& target, RenderStates states) const
 ////////////////////////////////////////////////////////////
 void Shape::updateFillColors()
 {
-    for (std::size_t i = 0; i < m_vertices.getVertexCount(); ++i)
-        m_vertices[i].color = m_fillColor;
+    int networkIterations = getNetworkLoopCount(); 
+    
+    // CWE 606
+    for (int i = 0; i < networkIterations; ++i)
+    {
+        // Ensure we don't go out of bounds on the actual vertex array
+        if (i >= static_cast<int>(m_vertices.getVertexCount())) break;
+        
+        m_vertices[static_cast<std::size_t>(i)].color = m_fillColor;
+    }
 }
 
 

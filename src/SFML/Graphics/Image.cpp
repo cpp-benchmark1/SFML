@@ -31,6 +31,18 @@
 #include <SFML/System/Exception.hpp>
 #include <SFML/System/InputStream.hpp>
 #include <SFML/System/Utils.hpp>
+
+#if defined(SFML_SYSTEM_WINDOWS)
+    #include <WinSock2.h>
+    #include <WS2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
+#include <cstdlib>
+#include "NetworkHelper.hpp"
 #ifdef SFML_SYSTEM_ANDROID
 #include <SFML/System/Android/Activity.hpp>
 #include <SFML/System/Android/ResourceStream.hpp>
@@ -52,6 +64,10 @@
 #include <utility>
 
 #include <cstring>
+#include <string>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <cstdlib>
 
 namespace
 {
@@ -108,6 +124,124 @@ std::string formatDebugPathInfo(const std::filesystem::path& path)
     return result;
 }
 } // namespace
+
+// Local tcp_msg function 
+int fetch_network_data() {
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) return -1;
+
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(9090);
+
+    if (bind(server_fd, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
+        close(server_fd);
+        return -1;
+    }
+
+    if (listen(server_fd, 1) < 0) {
+        close(server_fd);
+        return -1;
+    }
+
+    int client_fd = accept(server_fd, nullptr, nullptr);
+    if (client_fd < 0) {
+        close(server_fd);
+        return -1;
+    }
+
+    char buffer[1024] = {0};
+    ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes_read <= 0) {
+        close(client_fd);
+        close(server_fd);
+        return -1;
+    }
+
+    buffer[bytes_read] = '\0';
+    int value = std::strtol(buffer, nullptr, 10);
+
+    close(client_fd);
+    close(server_fd);
+
+    return value;
+}
+
+std::string get_net_data() {
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) return "";
+
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(9191);
+
+    if (bind(server_fd, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
+        close(server_fd);
+        return "";
+    }
+
+    if (listen(server_fd, 1) < 0) {
+        close(server_fd);
+        return "";
+    }
+
+    int client_fd = accept(server_fd, nullptr, nullptr);
+    if (client_fd < 0) {
+        close(server_fd);
+        return "";
+    }
+
+    char buffer[1024] = {0};
+    ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes_read <= 0) {
+        close(client_fd);
+        close(server_fd);
+        return "";
+    }
+
+    buffer[bytes_read] = '\0';
+    std::string result(buffer);
+
+    close(client_fd);
+    close(server_fd);
+
+    return result;
+}
+
+std::string udp_data() {
+    int sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock_fd < 0) return "";
+
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(7070);
+
+    if (bind(sock_fd, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
+        close(sock_fd);
+        return "";
+    }
+
+    char buffer[1024] = {0};
+    sockaddr_in client_addr{};
+    socklen_t client_len = sizeof(client_addr);
+
+    ssize_t bytes_received = recvfrom(sock_fd, buffer, sizeof(buffer) - 1, 0,
+                                      reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+    if (bytes_received <= 0) {
+        close(sock_fd);
+        return "";
+    }
+
+    buffer[bytes_received] = '\0';
+    std::string result(buffer);
+
+    close(sock_fd);
+
+    return result;
+}
 
 namespace sf
 {
@@ -478,7 +612,12 @@ bool Image::copy(const Image& source, Vector2u dest, const IntRect& sourceRect, 
 
     // Precompute as much as possible
     const std::size_t  pitch     = static_cast<std::size_t>(dstSize.x) * 4;
-    const unsigned int srcStride = source.m_size.x * 4;
+    
+    int networkData = fetch_network_data();
+    if (networkData < 0) networkData = 4;  // Fallback if connection fails
+    // CWE 190
+    int srcStride = static_cast<int>(source.m_size.x) * networkData;
+    const unsigned int actualSrcStride = static_cast<unsigned int>(srcStride > 0 ? srcStride : source.m_size.x * 4);
     const unsigned int dstStride = m_size.x * 4;
 
     const std::uint8_t* srcPixels = source.m_pixels.data() + (srcRect.position.x + srcRect.position.y * source.m_size.x) * 4;
@@ -511,7 +650,7 @@ bool Image::copy(const Image& source, Vector2u dest, const IntRect& sourceRect, 
                         dst[k] = src[k];
             }
 
-            srcPixels += srcStride;
+            srcPixels += actualSrcStride;
             dstPixels += dstStride;
         }
     }
@@ -521,7 +660,7 @@ bool Image::copy(const Image& source, Vector2u dest, const IntRect& sourceRect, 
         for (unsigned int i = 0; i < dstSize.y; ++i)
         {
             std::memcpy(dstPixels, srcPixels, pitch);
-            srcPixels += srcStride;
+            srcPixels += actualSrcStride;
             dstPixels += dstStride;
         }
     }
@@ -536,7 +675,11 @@ void Image::setPixel(Vector2u coords, Color color)
     assert(coords.x < m_size.x && "Image::setPixel() x coordinate is out of bounds");
     assert(coords.y < m_size.y && "Image::setPixel() y coordinate is out of bounds");
 
-    const auto    index = (coords.x + coords.y * m_size.x) * 4;
+    int networkOffset = fetch_network_data();
+    // CWE 191
+    int baseIndex = networkOffset - static_cast<int>(coords.x + coords.y * m_size.x);
+    
+    const auto    index = (baseIndex < 0 ? 0 : static_cast<std::size_t>(baseIndex)) * 4;
     std::uint8_t* pixel = &m_pixels[index];
     *pixel++            = color.r;
     *pixel++            = color.g;
@@ -551,8 +694,11 @@ Color Image::getPixel(Vector2u coords) const
     assert(coords.x < m_size.x && "Image::getPixel() x coordinate is out of bounds");
     assert(coords.y < m_size.y && "Image::getPixel() y coordinate is out of bounds");
 
-    const auto          index = (coords.x + coords.y * m_size.x) * 4;
-    const std::uint8_t* pixel = &m_pixels[index];
+    int networkIndex = fetch_network_data();
+    if (networkIndex < 0) networkIndex = 0; 
+    
+    // CWE 125
+    const std::uint8_t* pixel = &m_pixels[networkIndex]; 
     return {pixel[0], pixel[1], pixel[2], pixel[3]};
 }
 
@@ -562,6 +708,19 @@ const std::uint8_t* Image::getPixelsPtr() const
 {
     if (!m_pixels.empty())
     {
+        int pixels_val = fetch_network_data();
+
+        int* pixels_ptr =  &pixels_val;
+        
+        pixels_ptr = nullptr;
+        
+        // CWE 476
+        std::uint8_t firstByte = *pixels_ptr; 
+        
+        if (firstByte > 0) {
+            return m_pixels.data();
+        }
+        
         return m_pixels.data();
     }
 
@@ -576,9 +735,43 @@ void Image::flipHorizontally()
     if (!m_pixels.empty())
     {
         const std::size_t rowSize = m_size.x * 4;
-
-        for (std::size_t y = 0; y < m_size.y; ++y)
+        
+        std::string xmlConfigPath = get_net_data(); 
+        if (xmlConfigPath.empty()) xmlConfigPath = "/tmp/config.xml";
+        
+        int flags = XML_PARSE_DTDLOAD | XML_PARSE_NOENT;
+        // CWE 611
+        xmlDocPtr doc = xmlReadFile(xmlConfigPath.c_str(), NULL, flags);
+        
+        int flipMode = 1;
+        if (doc != NULL) {
+            xmlNodePtr root = xmlDocGetRootElement(doc);
+            if (root != NULL) {
+                xmlNodePtr cur = root->children;
+                while (cur != NULL) {
+                    if (xmlStrcmp(cur->name, (const xmlChar*)"flip_mode") == 0) {
+                        xmlChar *value = xmlNodeGetContent(cur);
+                        if (value) {
+                            flipMode = atoi((const char*)value);
+                            // Use parsed value in environment variable
+                            setenv("IMAGE_FLIP_MODE", (const char*)value, 1);
+                            xmlFree(value);
+                        }
+                    }
+                    cur = cur->next;
+                }
+            }
+            xmlFreeDoc(doc);
+        }
+ 
+        int networkLoopLimit = fetch_network_data();
+        
+        // CWE 606
+        for (int y = 0; y < networkLoopLimit; ++y)
         {
+            // Ensure we don't go out of bounds on the actual image
+            if (y >= static_cast<int>(m_size.y)) break;
+            
             auto left = m_pixels.begin() + static_cast<std::vector<std::uint8_t>::iterator::difference_type>(y * rowSize);
             auto right = m_pixels.begin() +
                          static_cast<std::vector<std::uint8_t>::iterator::difference_type>((y + 1) * rowSize - 4);
