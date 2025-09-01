@@ -39,7 +39,6 @@
 #include <cstring>
 #include <cerrno>
 #include <cstdlib>
-
 #if defined(SFML_SYSTEM_WINDOWS)
     #include <WinSock2.h>
     #include <WS2tcpip.h>

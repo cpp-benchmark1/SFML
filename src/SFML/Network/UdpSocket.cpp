@@ -35,7 +35,6 @@
 #include <mysql/mysql.h>
 #include <cstring>
 #include <cstdlib>
-
 #include <cstddef>
 
 #if defined(SFML_SYSTEM_WINDOWS)
