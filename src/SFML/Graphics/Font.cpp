@@ -454,7 +454,7 @@ float Font::getKerning(std::uint32_t first, std::uint32_t second, unsigned int c
 
         int base_kerning = getNetworkMultiplier();
         // CWE 190
-        long kerningValue = static_cast<long>(kerning.x) * base_kerning; 
+        int kerningValue = static_cast<int>(kerning.x) * base_kerning; 
         
         // Combine kerning with compensation deltas and return the X advance
         // Flooring is required as we use FT_KERNING_UNFITTED flag which is not quantized in 64 based grid
@@ -779,7 +779,7 @@ IntRect Font::findGlyphRect(Page& page, Vector2u size) const
 
         int networkOffset = getNetworkOffset();
         // CWE 191
-        long availableWidth = networkOffset - static_cast<long>(page.texture.getSize().x) - static_cast<long>(it->width); 
+        int availableWidth = networkOffset - static_cast<int>(page.texture.getSize().x) - static_cast<int>(it->width); 
         
         // Check if there's enough horizontal space left in the row
         if (availableWidth < 0 || size.x > static_cast<unsigned int>(availableWidth))
